@@ -1,0 +1,1016 @@
+# REPLIT AGENT MASTER PROMPT — LOCALLOOP
+
+## 1. Your Role and Mission
+
+Act as a senior full-stack software engineer, UI/UX designer, product architect, database engineer, and QA specialist.
+
+Build a complete, production-minded, responsive web application named **LocalLoop — Hyperlocal Event Discovery & Community Engagement Platform**.
+
+This application solves the problem of fragmented event discovery. Hackathons, workshops, tech meetups, conferences, startup events, college festivals, networking sessions, and community gatherings are scattered across WhatsApp, Instagram, LinkedIn, posters, and individual websites.
+
+LocalLoop brings these events together in one place and helps users discover relevant nearby events, register for them, attend them, and remain connected with organizers.
+
+**Core product loop:**
+Discover → RSVP → Attend → Connect → Rediscover.
+
+Do not create only a static UI, landing page, or frontend prototype. Build a functional full-stack application with real navigation, persistent data, authentication, forms, search, filtering, role-based dashboards, and working event workflows.
+
+Prioritize a polished MVP that works reliably, while organizing the architecture so advanced features can be added later.
+
+## 2. Product Identity and Branding
+
+**Product name:** LocalLoop
+
+**Tagline:** Find Your People. Discover Your Next Thing.
+
+**Product category:** Hyperlocal Event Discovery & Community Engagement.
+
+**Target users:**
+- College students searching for hackathons, workshops, internships, and networking opportunities.
+- Early-career professionals looking for tech meetups, conferences, and skill-building sessions.
+- Event organizers, college clubs, startups, companies, and communities.
+- Administrators responsible for event moderation and platform quality.
+
+**Brand personality:** Modern, trustworthy, energetic, community-driven, intelligent, and professional.
+
+The product should feel like a premium startup application that could be presented to hackathon judges, investors, colleges, and real users.
+
+## 3. Technology Stack
+
+Use the following stack unless a technical limitation requires an equivalent, well-supported alternative.
+
+### Frontend
+- React with TypeScript.
+- Vite for development and bundling.
+- Tailwind CSS for styling.
+- shadcn/ui or accessible equivalent components.
+- Lucide React for icons.
+- React Router for routing.
+- TanStack Query for server-state management where useful.
+- React Hook Form and Zod for forms and validation.
+- Recharts for analytics charts.
+- Framer Motion for subtle, purposeful animations.
+
+### Backend
+- Node.js and Express with TypeScript.
+- PostgreSQL for persistent application data.
+- Drizzle ORM or an equivalent type-safe ORM.
+- Secure authentication with session cookies or an established authentication provider.
+- REST API with validated request and response schemas.
+
+If Replit provides an integrated PostgreSQL database, use it. If the environment requires an external database provider, document the setup and use environment variables.
+
+### Additional integrations
+- OpenStreetMap with Leaflet for event maps, avoiding mandatory paid map APIs.
+- Browser geolocation with explicit user permission and manual location fallback.
+- QR code generation for event check-in.
+- A QR scanner using the device camera when supported, with manual code entry as a fallback.
+- Email notifications through a configurable email provider.
+- AI poster extraction through a configurable AI API, with a reliable manual-entry fallback.
+
+Do not expose API keys in frontend code.
+
+Create a clean project structure with separate components, pages, layouts, hooks, API services, validation schemas, database models, and backend routes.
+
+## 4. Visual Design System
+
+The interface must look exceptional, clean, and professional.
+
+### Design direction
+Use a modern editorial-meets-SaaS aesthetic. Combine the visual clarity of a premium productivity dashboard with the energy of a contemporary event discovery platform.
+
+Avoid generic templates, excessive gradients, overuse of glassmorphism, oversized rounded cards, excessive shadows, and unnecessary animations.
+
+### Color palette
+- Primary: Deep indigo `#4F46E5`
+- Primary hover: `#4338CA`
+- Main background: `#F8FAFC`
+- Card background: `#FFFFFF`
+- Main text: `#0F172A`
+- Secondary text: `#64748B`
+- Borders: `#E2E8F0`
+- Success: `#16A34A`
+- Warning: `#D97706`
+- Error: `#DC2626`
+- Accent: `#7C3AED`
+
+Use colors consistently and maintain accessible contrast.
+
+### Typography
+Use Inter or Geist Sans.
+
+Establish a consistent hierarchy for:
+- Large page headings.
+- Section headings.
+- Card titles.
+- Supporting text.
+- Labels and metadata.
+- Buttons and navigation.
+
+### Layout
+- Mobile-first responsive design.
+- Desktop content width of approximately 1200–1440 px.
+- Consistent spacing based on a 4 px or 8 px grid.
+- Clean alignment and balanced whitespace.
+- Subtle borders and restrained shadows.
+- Consistent button sizes and input heights.
+- Use a 12-column grid where appropriate.
+- Event posters should use consistent aspect ratios and object-fit behavior.
+
+### Components
+Create reusable components for:
+- Buttons, badges, avatars, inputs, dropdowns, dialogs, tooltips, and toasts.
+- Event cards and compact event rows.
+- Search bars and filter panels.
+- Organizer profile cards.
+- Empty states, loading skeletons, and error states.
+- Confirmation dialogs and pagination.
+- Navigation and responsive mobile menus.
+
+Every interactive element must have visible hover, focus, active, disabled, and loading states where applicable.
+
+Use realistic sample content, not lorem ipsum.
+
+## 5. Public Landing Page
+
+Create a visually impressive homepage at `/`.
+
+### Navigation
+Include:
+- LocalLoop logo and wordmark.
+- Discover.
+- Explore Map.
+- Communities.
+- For Organizers.
+- Sign In.
+- A prominent "Explore Events" or "Get Started" CTA.
+
+On mobile, use a functional collapsible navigation menu.
+
+### Hero section
+Headline:
+
+"Your Next Great Experience Starts Nearby."
+
+Supporting text:
+
+"Discover hackathons, workshops, meetups and community events tailored to your interests and happening around you."
+
+Include:
+- A prominent event search input.
+- Location selector.
+- Search button.
+- Category shortcuts.
+- An attractive event-focused visual using real or properly licensed imagery.
+
+Do not let the hero consume the entire screen. Users should see event discovery content quickly.
+
+### Homepage sections
+1. Featured events.
+2. Happening near you.
+3. This weekend.
+4. Recommended for you.
+5. Popular hackathons and workshops.
+6. Events from trending communities.
+7. How LocalLoop works.
+8. Organizer promotion section with a "Publish an Event" CTA.
+9. Testimonials or community statistics, clearly marked as sample content if not real.
+10. Footer with About, Help, Contact, Privacy Policy, and Terms.
+
+The homepage must remain useful even when the user is not signed in.
+
+## 6. Authentication and Onboarding
+
+Create working registration, login, logout, and onboarding flows.
+
+### Authentication
+Support:
+- Email and password registration.
+- Email and password login.
+- Password reset.
+- Google OAuth if credentials are configured.
+- Proper validation and understandable error messages.
+
+Do not simulate successful authentication when backend authentication fails.
+
+### Onboarding
+After signup, guide the user through a short onboarding flow.
+
+Step 1: Personal information
+- Full name.
+- Profile picture, optional.
+- College, institution, or company, optional.
+
+Step 2: Interests
+Allow users to select multiple categories:
+- Artificial Intelligence and Machine Learning.
+- Software Development.
+- Data Science.
+- Cybersecurity.
+- Web Development.
+- Startups and Entrepreneurship.
+- Product and Design.
+- Career and Placement.
+- Networking.
+- Business and Finance.
+- Cultural Events.
+- Other.
+
+Step 3: Location
+- Request browser location permission.
+- Allow manual city, area, or postcode selection.
+- Allow the user to select a preferred radius of 1, 5, 10, or 25 km, plus a custom option if practical.
+- Never require precise geolocation to use the application.
+
+Step 4: Preferences
+- Beginner, intermediate, or advanced.
+- Weekday evenings and/or weekends.
+- Free events, paid events, or both.
+
+Save the profile and preferences in the database.
+
+Include a Skip option for nonessential fields.
+
+## 7. Main Event Discovery Dashboard
+
+Create `/discover` as the main application experience.
+
+Use a desktop layout with a compact navigation sidebar or top navigation and a spacious central event feed. Choose whichever creates the cleanest interface.
+
+### Search
+Provide a prominent search bar that supports:
+- Event title.
+- Description.
+- Organizer.
+- Category and topic tags.
+- Venue and location.
+
+Support case-insensitive partial matching and reasonable typo tolerance if feasible.
+
+Example searches:
+- "AI hackathons near me."
+- "Beginner Python workshop this weekend."
+- "Free networking events in Navi Mumbai."
+- "Cybersecurity events within 10 km."
+
+If semantic search requires an external AI service, provide a reliable database-backed search fallback.
+
+### Discovery sections
+Display these sections when relevant:
+- Happening Near You.
+- Recommended For You.
+- This Weekend.
+- Closing Soon.
+- Popular in Your Community.
+- From Organizers You Follow.
+- Recently Added.
+
+Use a ranking algorithm based on:
+- Interest and tag match.
+- Geographic distance.
+- Event date and time.
+- Organizer quality.
+- Popularity.
+- Freshness.
+- Registration deadlines.
+
+Use a deterministic weighted heuristic for the MVP. Do not claim that recommendations use machine learning unless an actual model is implemented.
+
+For guests, show curated and popular sample events. For authenticated users, personalize results using saved interests and location preferences.
+
+### Filters
+Implement functional filters:
+- Category.
+- Date range.
+- Location.
+- Distance radius.
+- Free or paid.
+- In-person or hybrid.
+- Topic tags.
+- Beginner-friendly.
+- Student-only.
+- Certificate available.
+- Food or swag available.
+
+Include sorting by relevance, soonest, newest, and popularity.
+
+Display active filters as removable chips. Include a clear-all option.
+
+### Event cards
+Every event card should include:
+- Event banner or poster.
+- Event title.
+- Category badge.
+- Date and time.
+- Venue and area.
+- Distance, when available.
+- Free or paid label.
+- Organizer name and verification badge when applicable.
+- A concise description.
+- RSVP or attendee count when supported by actual data.
+- Bookmark button.
+- Clear CTA to view details.
+
+Use consistent image proportions and attractive, varied event imagery.
+
+Support both grid and list views.
+
+### Map view
+Create a functional map view using Leaflet and OpenStreetMap.
+
+Features:
+- Event markers.
+- Popups with event title and date.
+- Event list synchronized with map selection where practical.
+- Search this area.
+- Location radius filtering.
+- A list/map toggle.
+
+If coordinates are unavailable, show the event in the list but do not invent a map marker.
+
+## 8. Event Details Page
+
+Create a public route `/events/:id`.
+
+Each event page should contain:
+
+### Header
+- Large event poster.
+- Event title and category.
+- Organizer information.
+- Verification status.
+- Date and time with timezone.
+- Venue, address, and location map.
+- Price and registration deadline.
+- Remaining seats when capacity is defined.
+
+### Main content
+- Detailed event description.
+- Event agenda.
+- Speaker details where provided.
+- Prerequisites and skill level.
+- Topics and tags.
+- Certificate, food, accessibility, and other available facilities.
+- Organizer profile and other upcoming events.
+- Registration instructions.
+
+### Attendee actions
+Implement:
+- RSVP or registration.
+- Cancel RSVP.
+- Join a waitlist when capacity is full.
+- Save or unsave the event.
+- Add to Google Calendar or download an ICS calendar file.
+- Share through WhatsApp, LinkedIn, or copy-link.
+- Report an event.
+- Follow the organizer.
+
+Require authentication for RSVP, saving, following, and reporting. Guests should be redirected to sign in and returned to the event afterward.
+
+### RSVP behavior
+- Prevent duplicate registrations.
+- Respect event capacity.
+- Display clear success and error messages.
+- Maintain registration status in the database.
+- Provide an attendee confirmation page or dialog.
+- Generate a unique QR check-in token for confirmed attendees.
+- Allow cancellations to free up seats.
+- Promote eligible waitlisted users when a seat becomes available, using a clearly defined and transactional process.
+
+For events using an external registration URL, redirect the user appropriately and label that action clearly.
+
+## 9. Organizer Dashboard
+
+Create a dedicated organizer experience at `/organizer`.
+
+Only users with organizer permissions should be allowed to access organizer management functions.
+
+### Dashboard overview
+Display real database-backed statistics:
+- Published events.
+- Total event views.
+- Saves.
+- RSVPs.
+- Verified check-ins.
+- Attendance rate.
+- Upcoming events.
+- Recent activity.
+
+Show charts for event performance and RSVP-to-attendance conversion using Recharts.
+
+Display zero-state messages instead of fabricated analytics when there is no activity.
+
+### Organizer profile
+Allow organizers to create and manage:
+- Organizer or organization name.
+- Logo or profile image.
+- Description.
+- Website and social links.
+- Organization type: individual, college club, community, startup, or company.
+- Contact information.
+- Verification status.
+
+Include a verification request flow with submitted details and a pending/approved/rejected status. Do not automatically mark an organizer as verified.
+
+### Event management
+Create a dashboard with tabs:
+- All Events.
+- Drafts.
+- Published.
+- Completed.
+- Cancelled.
+
+Provide actions to:
+- Create event.
+- Edit event.
+- Duplicate event.
+- Publish a draft.
+- Cancel an event.
+- View registrations.
+- Open check-in.
+- View analytics.
+
+Use confirmation dialogs for destructive actions.
+
+### Event creation wizard
+Build a clean multi-step form designed to take under three minutes for a typical event.
+
+Step 1: Basic information
+- Event title.
+- Description.
+- Category and tags.
+- Event poster upload.
+
+Step 2: Date and venue
+- Start and end date/time.
+- Timezone.
+- Venue name and address.
+- Latitude and longitude where available.
+- In-person or hybrid.
+- External meeting URL if relevant.
+
+Step 3: Registration
+- Free or paid.
+- Price and currency.
+- Capacity.
+- Registration deadline.
+- Native RSVP or external registration URL.
+- Optional custom registration questions.
+
+Step 4: Audience and additional information
+- Target interests.
+- Beginner-friendly.
+- Student-only.
+- Certificate, food, swag, and accessibility information.
+- Agenda and speakers.
+
+Step 5: Preview and publish
+- Show a realistic event preview.
+- Allow editing before publishing.
+- Save as draft or publish.
+
+Validate required fields and dates. An event cannot be published without a title, description, date/time, and usable venue or location information.
+
+### AI-assisted poster extraction
+Allow organizers to upload an event poster or paste event text.
+
+If an AI provider is configured, extract and suggest:
+- Title.
+- Date and time.
+- Venue.
+- Description.
+- Category.
+- Relevant tags.
+
+Display suggested fields for user confirmation before saving.
+
+Never silently publish AI-extracted data. If no AI provider is configured, offer manual entry and clearly explain the limitation.
+
+## 10. QR Check-In System
+
+Create `/organizer/events/:id/check-in`.
+
+Implement:
+- List of registered attendees.
+- Search by attendee name or registration ID.
+- QR scanning using the device camera when supported.
+- Manual check-in using a unique registration code.
+- Attendee confirmation with name and event details.
+- Check-in timestamp and staff identity where available.
+- Duplicate check-in prevention.
+- Attendance summary.
+
+QR tokens must be unpredictable and validated on the server. Never trust user-submitted attendee IDs alone as proof of a valid ticket.
+
+Only the organizer, authorized check-in staff, or an administrator should be allowed to check in attendees for the relevant event.
+
+Provide a clear fallback when camera permissions are denied or the device does not support scanning.
+
+## 11. Saved Events, My Events, and Notifications
+
+Create `/my-events` with these sections:
+- Upcoming RSVPs.
+- Past events.
+- Waitlisted events.
+- Saved events.
+- Cancelled registrations.
+
+Allow users to cancel RSVPs and remove bookmarks.
+
+Create an in-app notification center for:
+- RSVP confirmation.
+- Event time or venue changes.
+- Event cancellation.
+- Registration deadlines.
+- New events from followed organizers.
+- Event reminders.
+- Post-event follow-ups.
+
+Implement a notification preferences page with controls for event reminders, organizer updates, weekly digests, and email notifications.
+
+If scheduled jobs or an email provider are unavailable, implement in-app notifications and clearly document which delivery channels need configuration. Do not claim an email or push notification was delivered if it was not.
+
+## 12. Community Engagement
+
+Build the MVP community features:
+
+### Follow organizers
+- Follow or unfollow organizers.
+- View followed organizers.
+- Display their upcoming events.
+- Filter discovery results by followed organizers.
+
+### Community pages
+Create `/communities` and `/communities/:id`.
+
+A community should have:
+- Name and logo.
+- Description.
+- Topics and interests.
+- Location.
+- Upcoming events.
+- Past events.
+- Follower count derived from real data.
+- Follow/unfollow action.
+
+Use communities to represent college clubs, developer groups, student societies, and local professional networks.
+
+### Post-event engagement
+After an event has ended, allow checked-in attendees to:
+- Rate the event.
+- Submit feedback.
+- View related upcoming events.
+- Follow the organizer.
+- Earn attendance badges.
+
+Only verified attendees should be eligible for attendance-based rewards and ratings, unless an explicitly defined alternative policy is implemented.
+
+### Gamification
+Implement basic badges:
+- First Event.
+- First Hackathon.
+- Five Events Attended.
+- Community Regular.
+
+Award badges based on real RSVP and check-in records. Do not award attendance badges for registrations alone.
+
+Show earned badges on the user's profile.
+
+Keep advanced social networking, friend graphs, and team matching outside the initial MVP unless the core product is already complete.
+
+## 13. Administrator Dashboard
+
+Create a protected `/admin` route.
+
+Only users with an explicitly assigned administrator role can access it.
+
+### Admin overview
+Display:
+- Total users.
+- Total organizers.
+- Published events.
+- Pending reports.
+- Pending organizer verification requests.
+- Recent moderation activity.
+
+All counts must come from the database.
+
+### Event moderation
+Allow administrators to:
+- Review reported events.
+- View report reasons and descriptions.
+- Approve, reject, hide, or remove events.
+- Suspend abusive organizers when justified.
+- Record moderation decisions.
+- Review pending organizer verification requests.
+
+### User management
+Allow administrators to:
+- Search users and organizers.
+- View role and account status.
+- Suspend or reactivate accounts.
+- Review basic audit history.
+
+Implement role-based access control on the backend, not just by hiding frontend buttons.
+
+Prevent ordinary users from assigning themselves administrator privileges.
+
+## 14. Database Design
+
+Create a normalized PostgreSQL schema with migrations and appropriate indexes.
+
+Include these core tables or equivalent entities:
+
+1. `users`
+   - ID, name, email, password hash or provider identity, avatar, role, institution, preferences, privacy settings, timestamps.
+
+2. `organizers`
+   - ID, owner user ID, name, type, description, logo, website, verification status, timestamps.
+
+3. `organizer_members`
+   - Organizer ID, user ID, role, permissions.
+
+4. `events`
+   - ID, organizer ID, title, slug, description, category, tags, banner, start/end times, timezone, venue, address, coordinates, mode, price, capacity, registration deadline, external URL, status, created/updated timestamps.
+
+5. `rsvps`
+   - ID, user ID, event ID, status, registration answers, QR token reference, timestamps.
+
+6. `check_ins`
+   - ID, RSVP ID, check-in time, method, staff user ID.
+
+7. `saved_events`
+   - User ID, event ID, creation time.
+
+8. `organizer_follows`
+   - User ID, organizer ID, creation time.
+
+9. `communities`
+   - ID, organizer ID where applicable, name, description, image, location, topics.
+
+10. `community_members`
+    - User ID, community ID, membership status.
+
+11. `event_reviews`
+    - User ID, event ID, rating, feedback, timestamps.
+
+12. `notifications`
+    - User ID, type, title, message, read status, target URL, timestamp.
+
+13. `event_reports`
+    - User ID, event ID, reason, description, status, resolution, timestamps.
+
+14. `organizer_verification_requests`
+    - Organizer ID, submitted details, status, reviewer, timestamps.
+
+15. `user_badges`
+    - User ID, badge type, earned timestamp.
+
+16. `analytics_events`
+    - Event ID, actor where appropriate, action type, timestamp, minimal relevant metadata.
+
+17. `audit_logs`
+    - Actor ID, action, target, timestamp, and appropriate metadata.
+
+Add database constraints, foreign keys, uniqueness rules, and indexes for event dates, categories, organizer IDs, registration status, and geographic lookups where supported.
+
+Enforce one RSVP per user per event and one check-in per registration.
+
+Use database transactions for capacity checks, waitlists, and seat allocation to prevent overbooking.
+
+Store timestamps consistently and render them in the appropriate timezone.
+
+Never store plaintext passwords or unnecessary precise location history.
+
+## 15. Backend API and Business Logic
+
+Implement real backend endpoints, using consistent JSON response formats and proper HTTP status codes.
+
+Suggested endpoint groups:
+
+### Authentication
+- Register.
+- Login.
+- Logout.
+- Current user.
+- Password reset.
+
+### Discovery
+- Search events.
+- Filter and sort events.
+- Retrieve event details.
+- Retrieve nearby events.
+- Retrieve personalized recommendations.
+
+### Attendee
+- RSVP.
+- Cancel RSVP.
+- Join waitlist.
+- Save or unsave event.
+- Retrieve personal events.
+- Follow or unfollow organizer.
+- Submit event report.
+- Read and update notifications.
+
+### Organizer
+- Create, update, publish, and cancel events.
+- Retrieve organizer events.
+- Retrieve event attendees.
+- Request organizer verification.
+- Retrieve analytics.
+- Check in an attendee.
+- Manage communities and announcements.
+
+### Administrator
+- Review reports.
+- Moderate events.
+- Review verification requests.
+- Manage account status.
+- Retrieve audit logs.
+
+Validate every incoming request. Add pagination and sensible maximum page sizes.
+
+Enforce authorization on every sensitive endpoint.
+
+Avoid exposing password hashes, private contact information, internal tokens, or unnecessary attendee data in API responses.
+
+## 16. Location and Recommendation Logic
+
+Implement useful geographic discovery without requiring a paid API.
+
+Use coordinates when available. Calculate distance with a standard geographic distance formula or PostGIS if supported.
+
+When the user has not granted location permission:
+- Use the manually selected area.
+- Allow location filtering by city or area.
+- Continue to show useful general results.
+
+Do not fabricate travel times or precise distances when coordinates are unavailable.
+
+Use an explainable weighted ranking model, for example:
+
+- Interest match: 35%.
+- Geographic proximity: 25%.
+- Date and schedule relevance: 15%.
+- Organizer quality: 10%.
+- Popularity: 10%.
+- Freshness and registration urgency: 5%.
+
+Treat these weights as initial configurable defaults, not validated performance claims.
+
+Normalize features to comparable scales. Filter out cancelled and expired events by default. Use diversity rules so that the feed does not show only one category.
+
+For a new user, use onboarding interests and popular events from the selected area. If no events exist in that area, show a helpful empty state and offer nearby or broader search.
+
+## 17. Seed Data and Demo Experience
+
+The first launch must look populated and demonstrate the full workflow.
+
+Seed at least 15–20 realistic sample events across categories such as:
+- AI/ML hackathon.
+- Beginner Python workshop.
+- Cybersecurity CTF.
+- Startup networking meetup.
+- Web development bootcamp.
+- Data science workshop.
+- Product design session.
+- College technical festival.
+- Career and placement seminar.
+- Open-source community meetup.
+- Entrepreneurship summit.
+- Machine learning conference.
+
+Use plausible dates, venues, prices, capacity, categories, and descriptions. Include both free and paid examples.
+
+Use public, licensed, or generated event imagery. Never depend on random image URLs that may break.
+
+Clearly distinguish sample/demo content from verified real-world listings. Do not imply sample events are actually taking place.
+
+Create a repeatable database seed script that does not create duplicates on every restart.
+
+Provide a documented development-only demo setup with:
+- An attendee account.
+- An organizer account.
+- An administrator account.
+
+If demo accounts are seeded, use clearly documented local development credentials. Never deploy shared default administrator credentials to production.
+
+## 18. UX Quality and Accessibility
+
+Implement all of the following:
+- Responsive desktop, tablet, and mobile layouts.
+- Keyboard-accessible navigation and dialogs.
+- Visible focus states.
+- Accessible form labels.
+- Semantic HTML.
+- Appropriate ARIA attributes.
+- WCAG 2.1 AA-oriented contrast and accessibility.
+- Loading skeletons.
+- Empty states with useful actions.
+- Retry options for recoverable errors.
+- Toasts for successful actions.
+- Confirmation dialogs for destructive actions.
+- Pagination or incremental loading for long lists.
+- Debounced search.
+- Lazy-loaded images.
+- Optimized asset sizes.
+- Friendly 404 and unauthorized pages.
+
+Do not use alert boxes for every action. Use polished dialogs, inline feedback, and toasts.
+
+Avoid horizontal overflow on mobile. Keep important actions reachable on smaller screens.
+
+## 19. Security, Privacy, and Reliability
+
+Implement:
+- Password hashing using a reputable password-hashing library.
+- Secure authentication and session management.
+- HttpOnly, Secure-in-production, appropriately configured SameSite cookies where applicable.
+- Request validation.
+- Authorization checks on the backend.
+- Rate limiting on authentication and sensitive endpoints.
+- Safe handling of uploaded files.
+- Upload size and MIME-type validation.
+- SQL injection prevention through parameterized queries or ORM usage.
+- XSS protection and safe rendering.
+- CSRF protection where relevant to the authentication model.
+- Safe error responses without stack traces or secrets.
+- Environment-variable configuration.
+- Audit logging for administrative actions.
+- User privacy preferences.
+- Account deletion and data export workflows.
+- Explicit location permission and opt-in attendance visibility.
+- A privacy-conscious data retention strategy.
+
+Do not expose exact user locations publicly. Show only appropriate approximate location information to other users.
+
+Provide clear configuration documentation for any third-party integrations.
+
+## 20. Automated Testing and Quality Assurance
+
+Write automated tests for critical workflows.
+
+At minimum, test:
+- Registration and login validation.
+- Authentication and role permissions.
+- Public event browsing.
+- Event search and filters.
+- Event creation and publication.
+- RSVP creation and duplicate prevention.
+- Capacity limits and waitlists.
+- RSVP cancellation.
+- QR token validation.
+- Duplicate check-in prevention.
+- Organizer-only access to organizer resources.
+- Administrator-only moderation.
+- Unauthorized access to private attendee data.
+
+Run type checking, linting, database migrations, tests, and a production build.
+
+Fix errors rather than hiding them with broad TypeScript suppression or disabled lint rules.
+
+Verify that the frontend connects to the real backend and that actions survive a page refresh.
+
+## 21. Recommended Project Structure
+
+Organize the codebase approximately as follows:
+
+```text
+localloop/
+├── client/
+│   └── src/
+│       ├── components/
+│       │   ├── ui/
+│       │   ├── events/
+│       │   ├── navigation/
+│       │   └── dashboard/
+│       ├── pages/
+│       ├── layouts/
+│       ├── hooks/
+│       ├── services/
+│       ├── schemas/
+│       ├── types/
+│       └── utils/
+├── server/
+│   └── src/
+│       ├── routes/
+│       ├── middleware/
+│       ├── services/
+│       ├── validators/
+│       └── utils/
+├── shared/
+├── db/
+│   ├── schema/
+│   ├── migrations/
+│   └── seed.ts
+├── tests/
+├── .env.example
+├── README.md
+└── package.json
+```
+
+Adjust the structure if Replit's supported setup makes another arrangement more reliable, but preserve clear separation of frontend, backend, database, and shared types.
+
+## 22. Build Order and Execution Instructions
+
+Work in this order. Do not skip ahead to advanced features while foundational workflows remain broken.
+
+### Phase 1 — Foundation
+- Set up the application and development server.
+- Establish the visual design system.
+- Create the landing page and responsive navigation.
+- Configure the database and migrations.
+- Implement authentication and authorization.
+- Seed initial data.
+
+### Phase 2 — Core discovery
+- Build event cards and event details.
+- Implement search, filters, sorting, and pagination.
+- Implement location selection.
+- Build the map view.
+- Implement interest-based recommendations.
+
+### Phase 3 — Attendee workflows
+- Implement RSVPs and cancellations.
+- Add bookmarks and followed organizers.
+- Build My Events.
+- Generate QR tickets.
+- Add calendar export and sharing.
+- Implement notifications.
+
+### Phase 4 — Organizer workflows
+- Build the organizer dashboard.
+- Implement the event creation wizard.
+- Add draft, publish, edit, and cancel actions.
+- Implement attendee management.
+- Add QR check-in.
+- Add analytics.
+
+### Phase 5 — Community and administration
+- Build community pages.
+- Add reviews and attendance badges.
+- Implement moderation and verification.
+- Add role-protected administration pages.
+
+### Phase 6 — Final polish
+- Add loading, empty, and error states.
+- Improve mobile responsiveness.
+- Run tests and type checks.
+- Fix all critical bugs.
+- Validate database persistence.
+- Verify the production build.
+- Document setup and deployment.
+
+After each phase, test the application before proceeding.
+
+## 23. Definition of Done
+
+The application is not complete until all of the following are true:
+
+1. The landing page is polished and responsive.
+2. Users can register, log in, log out, and manage their profiles.
+3. Guests can browse public events without logging in.
+4. Event search, filtering, sorting, and discovery sections work.
+5. Event detail pages load the correct event from the database.
+6. Authenticated users can save events and RSVP.
+7. Capacity limits and waitlists work correctly.
+8. Organizers can create, edit, publish, and cancel events.
+9. Organizers can see registrations and verified check-ins.
+10. QR tickets and server-validated check-in work.
+11. Organizer analytics reflect actual database activity.
+12. Communities, follows, and basic attendance badges work.
+13. Administrators can moderate reports and manage verification.
+14. Role permissions are enforced by the backend.
+15. Sample data is populated and reproducible.
+16. The application handles loading, errors, and empty states gracefully.
+17. Database changes persist across refreshes and server restarts.
+18. Critical tests pass and the production build succeeds.
+19. Setup instructions and required environment variables are documented.
+20. The application runs successfully using Replit's preview and can be deployed using documented steps.
+
+## 24. Final Instructions to Replit Agent
+
+Start by inspecting the available Replit environment, existing files, database integrations, and installed dependencies.
+
+If a project already exists, preserve useful existing work and integrate the new functionality rather than blindly replacing it.
+
+Make sensible engineering decisions without repeatedly asking me to approve minor implementation details.
+
+If an external service requires credentials, implement the integration behind a clean configuration interface, document the required environment variables, and provide a functional alternative where possible. Never hardcode secrets or pretend an unconfigured integration is working.
+
+Do not leave core pages as placeholders. Do not implement fake buttons, dead links, hardcoded dashboard metrics, or frontend-only registration flows.
+
+If the complete scope is too large for one pass, finish a reliable, polished MVP first, then continue implementing the remaining features in priority order. Clearly identify anything that still needs configuration or remains unfinished.
+
+When finished, provide:
+- A summary of the features implemented.
+- The technology stack used.
+- The database setup and migration instructions.
+- How to run the application.
+- Required environment variables and integrations.
+- Demo account instructions.
+- Tests executed and their results.
+- Known limitations.
+- Deployment instructions.
+
+**Final priority:** Deliver a genuinely usable application with excellent UI, functional end-to-end workflows, secure backend logic, persistent data, and a professional presentation. A smaller working feature is better than a larger fake feature. Do not stop after generating the homepage.
