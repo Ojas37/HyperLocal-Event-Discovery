@@ -10,6 +10,12 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: events
+    description: Event discovery and attendee workflows
+  - name: organizers
+    description: Organizer profiles and event management
+  - name: attendees
+    description: Personal events and registrations
 paths:
   /healthz:
     get:
@@ -24,6 +30,222 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /events:
+    get:
+      operationId: listEvents
+      tags: [events]
+      summary: Search and filter published events
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: city
+          schema: { type: string }
+        - in: query
+          name: mode
+          schema: { type: string, enum: [in-person, hybrid, online] }
+        - in: query
+          name: price
+          schema: { type: string, enum: [free, paid] }
+        - in: query
+          name: sort
+          schema: { type: string, enum: [relevance, soonest, newest, popular] }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+      responses:
+        "200":
+          description: Matching events
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Event" }
+  /events/featured:
+    get:
+      operationId: getFeaturedEvents
+      tags: [events]
+      summary: Get featured upcoming events
+      responses:
+        "200":
+          description: Featured events
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Event" }
+  /events/{eventId}:
+    get:
+      operationId: getEvent
+      tags: [events]
+      summary: Get event details
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Event details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "404": { description: Event not found }
+  /events/{eventId}/rsvp:
+    post:
+      operationId: createRsvp
+      tags: [attendees]
+      summary: RSVP for an event or join its waitlist
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+      responses:
+        "201":
+          description: Registration created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Rsvp" }
+        "401": { description: Sign-in required }
+        "409": { description: Registration already exists or event is unavailable }
+    delete:
+      operationId: cancelRsvp
+      tags: [attendees]
+      summary: Cancel an RSVP
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: RSVP cancelled }
+        "401": { description: Sign-in required }
+        "404": { description: RSVP not found }
+  /events/{eventId}/save:
+    post:
+      operationId: saveEvent
+      tags: [attendees]
+      summary: Save an event
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Event saved }
+        "401": { description: Sign-in required }
+    delete:
+      operationId: unsaveEvent
+      tags: [attendees]
+      summary: Remove an event from saved events
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Event removed from saved events }
+        "401": { description: Sign-in required }
+  /me/events:
+    get:
+      operationId: getMyEvents
+      tags: [attendees]
+      summary: Get the current user's RSVPs and saved events
+      responses:
+        "200":
+          description: Personal event lists
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MyEvents" }
+        "401": { description: Sign-in required }
+  /organizer/me:
+    get:
+      operationId: getMyOrganizer
+      tags: [organizers]
+      summary: Get the current user's organizer profile
+      responses:
+        "200":
+          description: Organizer profile or null
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/Organizer"
+                  - type: "null"
+        "401": { description: Sign-in required }
+    post:
+      operationId: createOrganizer
+      tags: [organizers]
+      summary: Create an organizer profile for the current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrganizerInput" }
+      responses:
+        "201":
+          description: Organizer profile created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Organizer" }
+        "401": { description: Sign-in required }
+        "409": { description: Organizer profile already exists }
+  /organizer/dashboard:
+    get:
+      operationId: getOrganizerDashboard
+      tags: [organizers]
+      summary: Get organizer events and live RSVP counts
+      responses:
+        "200":
+          description: Organizer dashboard
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrganizerDashboard" }
+        "401": { description: Sign-in required }
+        "403": { description: Organizer profile required }
+  /organizer/events:
+    post:
+      operationId: createOrganizerEvent
+      tags: [organizers]
+      summary: Create an event draft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EventInput" }
+      responses:
+        "201":
+          description: Event created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "401": { description: Sign-in required }
+        "403": { description: Organizer profile required }
+  /organizer/events/{eventId}/publish:
+    post:
+      operationId: publishOrganizerEvent
+      tags: [organizers]
+      summary: Publish an event owned by the current organizer
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Published event
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "400": { description: Event is missing required information }
+        "401": { description: Sign-in required }
+        "403": { description: Organizer profile required }
+        "404": { description: Event not found }
 components:
   schemas:
     HealthStatus:
@@ -33,4 +255,109 @@ components:
           type: string
       required:
         - status
+    OrganizerSummary:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        verified: { type: boolean }
+      required: [id, name, verified]
+    Organizer:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        type: { type: string }
+        description: { type: string }
+        verified: { type: boolean }
+      required: [id, name, type, description, verified]
+    OrganizerInput:
+      type: object
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        type: { type: string, enum: [individual, college-club, community, startup, company] }
+        description: { type: string, maxLength: 1000 }
+      required: [name, type]
+    Event:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        slug: { type: string }
+        description: { type: string }
+        category: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        bannerUrl: { type: string }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        timezone: { type: string }
+        venue: { type: string }
+        city: { type: string }
+        mode: { type: string, enum: [in-person, hybrid, online] }
+        price: { type: number }
+        currency: { type: string }
+        capacity: { type: ["integer", "null"] }
+        registrationDeadline: { type: ["string", "null"], format: date-time }
+        externalUrl: { type: ["string", "null"] }
+        status: { type: string, enum: [draft, published, cancelled, completed] }
+        isDemo: { type: boolean }
+        attendeeCount: { type: integer }
+        rsvpStatus: { type: ["string", "null"], enum: [confirmed, waitlisted, null] }
+        isSaved: { type: boolean }
+        organizer: { $ref: "#/components/schemas/OrganizerSummary" }
+      required: [id, title, slug, description, category, tags, bannerUrl, startAt, endAt, timezone, venue, city, mode, price, currency, capacity, registrationDeadline, externalUrl, status, isDemo, attendeeCount, rsvpStatus, isSaved, organizer]
+    EventInput:
+      type: object
+      properties:
+        title: { type: string, minLength: 5, maxLength: 140 }
+        description: { type: string, minLength: 20, maxLength: 5000 }
+        category: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        bannerUrl: { type: string }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        timezone: { type: string }
+        venue: { type: string }
+        city: { type: string }
+        mode: { type: string, enum: [in-person, hybrid, online] }
+        price: { type: number, minimum: 0 }
+        currency: { type: string, minLength: 3, maxLength: 3 }
+        capacity: { type: ["integer", "null"], minimum: 1 }
+        registrationDeadline: { type: ["string", "null"], format: date-time }
+        externalUrl: { type: ["string", "null"] }
+      required: [title, description, category, tags, bannerUrl, startAt, endAt, timezone, venue, city, mode, price, currency, capacity, registrationDeadline, externalUrl]
+    Rsvp:
+      type: object
+      properties:
+        id: { type: integer }
+        eventId: { type: integer }
+        status: { type: string, enum: [confirmed, waitlisted] }
+        registrationCode: { type: string }
+      required: [id, eventId, status, registrationCode]
+    MyEvents:
+      type: object
+      properties:
+        registered:
+          type: array
+          items: { $ref: "#/components/schemas/Event" }
+        saved:
+          type: array
+          items: { $ref: "#/components/schemas/Event" }
+      required: [registered, saved]
+    OrganizerDashboard:
+      type: object
+      properties:
+        organizer: { $ref: "#/components/schemas/Organizer" }
+        events:
+          type: array
+          items: { $ref: "#/components/schemas/Event" }
+        publishedCount: { type: integer }
+        draftCount: { type: integer }
+        confirmedRsvps: { type: integer }
+        waitlistedRsvps: { type: integer }
+      required: [organizer, events, publishedCount, draftCount, confirmedRsvps, waitlistedRsvps]
 
