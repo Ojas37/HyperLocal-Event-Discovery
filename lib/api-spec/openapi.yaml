@@ -16,6 +16,10 @@ tags:
     description: Organizer profiles and event management
   - name: attendees
     description: Personal events and registrations
+  - name: communities
+    description: Community listings and memberships
+  - name: admin
+    description: Protected moderation and trust operations
 paths:
   /healthz:
     get:
@@ -57,6 +61,21 @@ paths:
         - in: query
           name: limit
           schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+        - in: query
+          name: dateFrom
+          schema: { type: string, format: date-time }
+        - in: query
+          name: dateTo
+          schema: { type: string, format: date-time }
+        - in: query
+          name: latitude
+          schema: { type: number, minimum: -90, maximum: 90 }
+        - in: query
+          name: longitude
+          schema: { type: number, minimum: -180, maximum: 180 }
+        - in: query
+          name: radiusKm
+          schema: { type: number, minimum: 1, maximum: 500 }
       responses:
         "200":
           description: Matching events
@@ -246,6 +265,563 @@ paths:
         "401": { description: Sign-in required }
         "403": { description: Organizer profile required }
         "404": { description: Event not found }
+  /organizer/events/{eventId}:
+    patch:
+      operationId: updateOrganizerEvent
+      tags: [organizers]
+      summary: Update an event owned by the current organizer
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateEventInput" }
+      responses:
+        "200":
+          description: Updated event
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "401": { description: Sign-in required }
+        "403": { description: Event owner required }
+        "404": { description: Event not found }
+  /organizer/events/{eventId}/cancel:
+    post:
+      operationId: cancelOrganizerEvent
+      tags: [organizers]
+      summary: Cancel an event and notify attendees
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Cancelled event
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "401": { description: Sign-in required }
+        "403": { description: Event owner required }
+        "404": { description: Event not found }
+  /organizer/events/{eventId}/attendees:
+    get:
+      operationId: getOrganizerAttendees
+      tags: [organizers]
+      summary: List event registrations for an owner or assigned staff member
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Registrations and check-in totals
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttendeeRoster" }
+        "401": { description: Sign-in required }
+        "403": { description: Organizer or event staff access required }
+        "404": { description: Event not found }
+  /organizer/events/{eventId}/check-ins:
+    post:
+      operationId: checkInAttendee
+      tags: [organizers]
+      summary: Validate and check in one confirmed attendee
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CheckInInput" }
+      responses:
+        "200":
+          description: Check-in recorded or duplicate detected
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CheckInResult" }
+        "400": { description: Invalid or ineligible ticket }
+        "401": { description: Sign-in required }
+        "403": { description: Organizer or assigned staff required }
+        "404": { description: Event or ticket not found }
+  /organizer/events/{eventId}/staff:
+    get:
+      operationId: listEventStaff
+      tags: [organizers]
+      summary: List assigned event check-in staff
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Event staff
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/EventStaff" }
+        "401": { description: Sign-in required }
+        "403": { description: Event owner required }
+    post:
+      operationId: assignEventStaff
+      tags: [organizers]
+      summary: Assign a Clerk user to event check-in
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssignEventStaffInput" }
+      responses:
+        "201":
+          description: Staff assignment created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EventStaff" }
+        "401": { description: Sign-in required }
+        "403": { description: Event owner required }
+        "409": { description: User is already assigned }
+  /organizer/events/{eventId}/staff/{userId}:
+    delete:
+      operationId: removeEventStaff
+      tags: [organizers]
+      summary: Remove an event check-in staff assignment
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+        - in: path
+          name: userId
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: Staff assignment removed }
+        "401": { description: Sign-in required }
+        "403": { description: Event owner required }
+  /organizer/events/{eventId}/registrations.csv:
+    get:
+      operationId: exportOrganizerRegistrations
+      tags: [organizers]
+      summary: Download the event registration roster as CSV
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: CSV registration export
+          content:
+            text/csv:
+              schema: { type: string }
+        "401": { description: Sign-in required }
+        "403": { description: Organizer access required }
+  /organizer/verification:
+    post:
+      operationId: requestOrganizerVerification
+      tags: [organizers]
+      summary: Request organizer profile verification
+      responses:
+        "200":
+          description: Verification request status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Organizer" }
+        "401": { description: Sign-in required }
+        "404": { description: Organizer profile not found }
+  /events/{eventId}/reports:
+    post:
+      operationId: reportEvent
+      tags: [events]
+      summary: Report an event to LocalLoop moderators
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReportEventInput" }
+      responses:
+        "201":
+          description: Event report submitted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EventReport" }
+        "401": { description: Sign-in required }
+        "404": { description: Event not found }
+        "409": { description: Event already reported by this user }
+  /events/{eventId}/reviews:
+    get:
+      operationId: listEventReviews
+      tags: [events]
+      summary: List attendee feedback for an event
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Event review list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/EventReview" }
+    post:
+      operationId: createEventReview
+      tags: [attendees]
+      summary: Leave feedback after verified attendance
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EventReviewInput" }
+      responses:
+        "201":
+          description: Review saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EventReview" }
+        "401": { description: Sign-in required }
+        "403": { description: Verified attendance required }
+        "409": { description: Review already exists }
+  /organizers/{organizerId}/follow:
+    post:
+      operationId: followOrganizer
+      tags: [attendees]
+      summary: Follow an organizer
+      parameters:
+        - in: path
+          name: organizerId
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Organizer followed }
+        "401": { description: Sign-in required }
+        "404": { description: Organizer not found }
+    delete:
+      operationId: unfollowOrganizer
+      tags: [attendees]
+      summary: Unfollow an organizer
+      parameters:
+        - in: path
+          name: organizerId
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Organizer unfollowed }
+        "401": { description: Sign-in required }
+  /communities:
+    get:
+      operationId: listCommunities
+      tags: [communities]
+      summary: List public communities
+      parameters:
+        - in: query
+          name: city
+          schema: { type: string }
+      responses:
+        "200":
+          description: Public communities
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Community" }
+    post:
+      operationId: createCommunity
+      tags: [communities]
+      summary: Create a community for the current organizer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommunityInput" }
+      responses:
+        "201":
+          description: Community created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Community" }
+        "401": { description: Sign-in required }
+        "403": { description: Organizer profile required }
+  /communities/{slug}:
+    get:
+      operationId: getCommunity
+      tags: [communities]
+      summary: Get a public community and upcoming events
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Community details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommunityDetail" }
+        "404": { description: Community not found }
+  /communities/{communityId}/join:
+    post:
+      operationId: joinCommunity
+      tags: [communities]
+      summary: Join a public community
+      parameters:
+        - in: path
+          name: communityId
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Community joined }
+        "401": { description: Sign-in required }
+        "404": { description: Community not found }
+    delete:
+      operationId: leaveCommunity
+      tags: [communities]
+      summary: Leave a community
+      parameters:
+        - in: path
+          name: communityId
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Community left }
+        "401": { description: Sign-in required }
+  /me/preferences:
+    get:
+      operationId: getMyPreferences
+      tags: [attendees]
+      summary: Get the current user's discovery and privacy preferences
+      responses:
+        "200":
+          description: User preferences
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserPreferences" }
+        "401": { description: Sign-in required }
+    put:
+      operationId: updateMyPreferences
+      tags: [attendees]
+      summary: Save interests, home city, and privacy preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserPreferencesInput" }
+      responses:
+        "200":
+          description: Updated preferences
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserPreferences" }
+        "401": { description: Sign-in required }
+  /me/recommendations:
+    get:
+      operationId: getMyRecommendations
+      tags: [events]
+      summary: Recommend upcoming events using saved interests and follows
+      responses:
+        "200":
+          description: Personalized upcoming events
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Event" }
+        "401": { description: Sign-in required }
+  /me/notifications:
+    get:
+      operationId: getMyNotifications
+      tags: [attendees]
+      summary: Get in-app notifications for the current user
+      responses:
+        "200":
+          description: Recent notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Notification" }
+        "401": { description: Sign-in required }
+  /me/notifications/{notificationId}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [attendees]
+      summary: Mark one notification as read
+      parameters:
+        - in: path
+          name: notificationId
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Notification marked as read }
+        "401": { description: Sign-in required }
+  /me/badges:
+    get:
+      operationId: getMyAttendanceBadges
+      tags: [attendees]
+      summary: Get attendance badges earned through verified check-in
+      responses:
+        "200":
+          description: Verified attendance badges
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AttendanceBadge" }
+        "401": { description: Sign-in required }
+  /admin/dashboard:
+    get:
+      operationId: getAdminDashboard
+      tags: [admin]
+      summary: Get moderation queue counts
+      responses:
+        "200":
+          description: Admin dashboard
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminDashboard" }
+        "401": { description: Sign-in required }
+        "403": { description: Administrator access required }
+  /admin/reports:
+    get:
+      operationId: listAdminReports
+      tags: [admin]
+      summary: List event reports for moderation
+      responses:
+        "200":
+          description: Event report queue
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/EventReport" }
+        "401": { description: Sign-in required }
+        "403": { description: Administrator access required }
+  /admin/reports/{reportId}:
+    patch:
+      operationId: resolveAdminReport
+      tags: [admin]
+      summary: Resolve or dismiss an event report
+      parameters:
+        - in: path
+          name: reportId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ModerateReportInput" }
+      responses:
+        "200":
+          description: Updated report
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EventReport" }
+        "401": { description: Sign-in required }
+        "403": { description: Administrator access required }
+        "404": { description: Report not found }
+  /admin/organizers/{organizerId}/verification:
+    post:
+      operationId: reviewOrganizerVerification
+      tags: [admin]
+      summary: Approve or reject organizer verification
+      parameters:
+        - in: path
+          name: organizerId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminVerificationInput" }
+      responses:
+        "200":
+          description: Updated organizer
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Organizer" }
+        "401": { description: Sign-in required }
+        "403": { description: Administrator access required }
+        "404": { description: Organizer not found }
+  /admin/users/{userId}/suspension:
+    post:
+      operationId: suspendAdminUser
+      tags: [admin]
+      summary: Suspend a user account
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SuspendUserInput" }
+      responses:
+        "204": { description: User suspended }
+        "401": { description: Sign-in required }
+        "403": { description: Administrator access required }
+    delete:
+      operationId: unsuspendAdminUser
+      tags: [admin]
+      summary: Restore a suspended user account
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: User restored }
+        "401": { description: Sign-in required }
+        "403": { description: Administrator access required }
+  /admin/users/{userId}/role:
+    put:
+      operationId: assignAdminRole
+      tags: [admin]
+      summary: Assign or remove a moderator role
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssignUserRoleInput" }
+      responses:
+        "204": { description: Role updated }
+        "401": { description: Sign-in required }
+        "403": { description: Administrator access required }
 components:
   schemas:
     HealthStatus:
@@ -270,7 +846,8 @@ components:
         type: { type: string }
         description: { type: string }
         verified: { type: boolean }
-      required: [id, name, type, description, verified]
+        verificationStatus: { type: string, enum: [not_requested, pending, approved, rejected] }
+      required: [id, name, type, description, verified, verificationStatus]
     OrganizerInput:
       type: object
       properties:
@@ -295,6 +872,8 @@ components:
         timezone: { type: string }
         venue: { type: string }
         city: { type: string }
+        latitude: { type: ["number", "null"], minimum: -90, maximum: 90 }
+        longitude: { type: ["number", "null"], minimum: -180, maximum: 180 }
         mode: { type: string, enum: [in-person, hybrid, online] }
         price: { type: number }
         currency: { type: string }
@@ -304,10 +883,14 @@ components:
         status: { type: string, enum: [draft, published, cancelled, completed] }
         isDemo: { type: boolean }
         attendeeCount: { type: integer }
-        rsvpStatus: { type: ["string", "null"], enum: [confirmed, waitlisted, null] }
+        rsvpStatus: { type: ["string", "null"], enum: [confirmed, waitlisted, cancelled, null] }
+        rsvpRegistrationCode: { type: ["string", "null"] }
+        rsvpCheckedInAt: { type: ["string", "null"], format: date-time }
+        organizerFollowing: { type: boolean }
+        distanceKm: { type: ["number", "null"] }
         isSaved: { type: boolean }
         organizer: { $ref: "#/components/schemas/OrganizerSummary" }
-      required: [id, title, slug, description, category, tags, bannerUrl, startAt, endAt, timezone, venue, city, mode, price, currency, capacity, registrationDeadline, externalUrl, status, isDemo, attendeeCount, rsvpStatus, isSaved, organizer]
+      required: [id, title, slug, description, category, tags, bannerUrl, startAt, endAt, timezone, venue, city, latitude, longitude, mode, price, currency, capacity, registrationDeadline, externalUrl, status, isDemo, attendeeCount, rsvpStatus, rsvpRegistrationCode, rsvpCheckedInAt, organizerFollowing, distanceKm, isSaved, organizer]
     EventInput:
       type: object
       properties:
@@ -323,31 +906,61 @@ components:
         timezone: { type: string }
         venue: { type: string }
         city: { type: string }
+        latitude: { type: ["number", "null"], minimum: -90, maximum: 90 }
+        longitude: { type: ["number", "null"], minimum: -180, maximum: 180 }
         mode: { type: string, enum: [in-person, hybrid, online] }
         price: { type: number, minimum: 0 }
         currency: { type: string, minLength: 3, maxLength: 3 }
         capacity: { type: ["integer", "null"], minimum: 1 }
         registrationDeadline: { type: ["string", "null"], format: date-time }
         externalUrl: { type: ["string", "null"] }
-      required: [title, description, category, tags, bannerUrl, startAt, endAt, timezone, venue, city, mode, price, currency, capacity, registrationDeadline, externalUrl]
+      required: [title, description, category, tags, bannerUrl, startAt, endAt, timezone, venue, city, latitude, longitude, mode, price, currency, capacity, registrationDeadline, externalUrl]
+    UpdateEventInput:
+      type: object
+      properties:
+        title: { type: string, minLength: 5, maxLength: 140 }
+        description: { type: string, minLength: 20, maxLength: 5000 }
+        category: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        bannerUrl: { type: string }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        timezone: { type: string }
+        venue: { type: string }
+        city: { type: string }
+        latitude: { type: ["number", "null"], minimum: -90, maximum: 90 }
+        longitude: { type: ["number", "null"], minimum: -180, maximum: 180 }
+        mode: { type: string, enum: [in-person, hybrid, online] }
+        price: { type: number, minimum: 0 }
+        currency: { type: string, minLength: 3, maxLength: 3 }
+        capacity: { type: ["integer", "null"], minimum: 1 }
+        registrationDeadline: { type: ["string", "null"], format: date-time }
+        externalUrl: { type: ["string", "null"] }
+      required: [title, description, category, tags, bannerUrl, startAt, endAt, timezone, venue, city, latitude, longitude, mode, price, currency, capacity, registrationDeadline, externalUrl]
     Rsvp:
       type: object
       properties:
         id: { type: integer }
         eventId: { type: integer }
-        status: { type: string, enum: [confirmed, waitlisted] }
+        status: { type: string, enum: [confirmed, waitlisted, cancelled] }
         registrationCode: { type: string }
-      required: [id, eventId, status, registrationCode]
+        checkedInAt: { type: ["string", "null"], format: date-time }
+      required: [id, eventId, status, registrationCode, checkedInAt]
     MyEvents:
       type: object
       properties:
         registered:
           type: array
           items: { $ref: "#/components/schemas/Event" }
+        cancelled:
+          type: array
+          items: { $ref: "#/components/schemas/Event" }
         saved:
           type: array
           items: { $ref: "#/components/schemas/Event" }
-      required: [registered, saved]
+      required: [registered, cancelled, saved]
     OrganizerDashboard:
       type: object
       properties:
@@ -360,4 +973,189 @@ components:
         confirmedRsvps: { type: integer }
         waitlistedRsvps: { type: integer }
       required: [organizer, events, publishedCount, draftCount, confirmedRsvps, waitlistedRsvps]
+    OrganizerAttendee:
+      type: object
+      properties:
+        id: { type: integer }
+        attendeeRef: { type: string }
+        status: { type: string, enum: [confirmed, waitlisted, cancelled] }
+        registrationCode: { type: string }
+        checkedInAt: { type: ["string", "null"], format: date-time }
+        registeredAt: { type: string, format: date-time }
+      required: [id, attendeeRef, status, registrationCode, checkedInAt, registeredAt]
+    AttendeeRoster:
+      type: object
+      properties:
+        eventId: { type: integer }
+        attendees:
+          type: array
+          items: { $ref: "#/components/schemas/OrganizerAttendee" }
+        registeredCount: { type: integer }
+        checkedInCount: { type: integer }
+        attendanceRate: { type: number }
+      required: [eventId, attendees, registeredCount, checkedInCount, attendanceRate]
+    CheckInInput:
+      type: object
+      properties:
+        registrationCode: { type: string, minLength: 12, maxLength: 128 }
+      required: [registrationCode]
+    CheckInResult:
+      type: object
+      properties:
+        rsvpId: { type: integer }
+        eventId: { type: integer }
+        attendeeRef: { type: string }
+        checkedInAt: { type: string, format: date-time }
+        alreadyCheckedIn: { type: boolean }
+      required: [rsvpId, eventId, attendeeRef, checkedInAt, alreadyCheckedIn]
+    EventStaff:
+      type: object
+      properties:
+        userId: { type: string }
+        role: { type: string, enum: [check_in] }
+        assignedAt: { type: string, format: date-time }
+      required: [userId, role, assignedAt]
+    AssignEventStaffInput:
+      type: object
+      properties:
+        userId: { type: string, minLength: 1, maxLength: 128 }
+      required: [userId]
+    EventReview:
+      type: object
+      properties:
+        id: { type: integer }
+        eventId: { type: integer }
+        reviewerLabel: { type: string }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        content: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [id, eventId, reviewerLabel, rating, content, createdAt]
+    EventReviewInput:
+      type: object
+      properties:
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        content: { type: string, maxLength: 2000 }
+      required: [rating]
+    EventReport:
+      type: object
+      properties:
+        id: { type: integer }
+        eventId: { type: integer }
+        eventTitle: { type: string }
+        reporterId: { type: string }
+        reason: { type: string }
+        details: { type: string }
+        status: { type: string, enum: [open, actioned, dismissed] }
+        reviewedBy: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+      required: [id, eventId, eventTitle, reporterId, reason, details, status, reviewedBy, createdAt]
+    ReportEventInput:
+      type: object
+      properties:
+        reason: { type: string, enum: [spam, misleading, unsafe, inappropriate, other] }
+        details: { type: string, maxLength: 2000 }
+      required: [reason]
+    ModerateReportInput:
+      type: object
+      properties:
+        status: { type: string, enum: [actioned, dismissed] }
+        cancelEvent: { type: boolean }
+      required: [status, cancelEvent]
+    AdminVerificationInput:
+      type: object
+      properties:
+        status: { type: string, enum: [approved, rejected] }
+      required: [status]
+    SuspendUserInput:
+      type: object
+      properties:
+        reason: { type: string, minLength: 5, maxLength: 500 }
+      required: [reason]
+    AssignUserRoleInput:
+      type: object
+      properties:
+        role: { type: string, enum: [moderator] }
+        enabled: { type: boolean }
+      required: [role, enabled]
+    AdminDashboard:
+      type: object
+      properties:
+        openReports: { type: integer }
+        pendingVerifications: { type: integer }
+        suspendedUsers: { type: integer }
+      required: [openReports, pendingVerifications, suspendedUsers]
+    Community:
+      type: object
+      properties:
+        id: { type: integer }
+        slug: { type: string }
+        name: { type: string }
+        description: { type: string }
+        topics:
+          type: array
+          items: { type: string }
+        city: { type: ["string", "null"] }
+        organizer: { $ref: "#/components/schemas/OrganizerSummary" }
+        memberCount: { type: integer }
+        isMember: { type: boolean }
+      required: [id, slug, name, description, topics, city, organizer, memberCount, isMember]
+    CommunityDetail:
+      type: object
+      properties:
+        community: { $ref: "#/components/schemas/Community" }
+        events:
+          type: array
+          items: { $ref: "#/components/schemas/Event" }
+      required: [community, events]
+    CommunityInput:
+      type: object
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        description: { type: string, minLength: 10, maxLength: 2000 }
+        topics:
+          type: array
+          items: { type: string, maxLength: 40 }
+        city: { type: ["string", "null"] }
+      required: [name, description, topics, city]
+    UserPreferences:
+      type: object
+      properties:
+        interests:
+          type: array
+          items: { type: string }
+        homeCity: { type: ["string", "null"] }
+        preferredRadiusKm: { type: integer, minimum: 1, maximum: 500 }
+        showAttendanceBadges: { type: boolean }
+        profileVisibility: { type: string, enum: [private, community, public] }
+      required: [interests, homeCity, preferredRadiusKm, showAttendanceBadges, profileVisibility]
+    UserPreferencesInput:
+      type: object
+      properties:
+        interests:
+          type: array
+          maxItems: 15
+          items: { type: string, minLength: 1, maxLength: 60 }
+        homeCity: { type: ["string", "null"], maxLength: 100 }
+        preferredRadiusKm: { type: integer, minimum: 1, maximum: 500 }
+        showAttendanceBadges: { type: boolean }
+        profileVisibility: { type: string, enum: [private, community, public] }
+      required: [interests, homeCity, preferredRadiusKm, showAttendanceBadges, profileVisibility]
+    Notification:
+      type: object
+      properties:
+        id: { type: integer }
+        eventId: { type: ["integer", "null"] }
+        kind: { type: string }
+        title: { type: string }
+        body: { type: string }
+        readAt: { type: ["string", "null"], format: date-time }
+        createdAt: { type: string, format: date-time }
+      required: [id, eventId, kind, title, body, readAt, createdAt]
+    AttendanceBadge:
+      type: object
+      properties:
+        eventId: { type: integer }
+        eventTitle: { type: string }
+        issuedAt: { type: string, format: date-time }
+      required: [eventId, eventTitle, issuedAt]
 

@@ -44,6 +44,7 @@
     "@tailwindcss/typography": "^0.5.15",
     "@tailwindcss/vite": "catalog:",
     "@tanstack/react-query": "catalog:",
+    "@types/leaflet": "^1.9.22",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
@@ -76,6 +77,10 @@
   },
   "dependencies": {
     "@clerk/react": "^6.18.0",
-    "@clerk/themes": "^2.4.57"
+    "@clerk/themes": "^2.4.57",
+    "@zxing/browser": "^0.2.1",
+    "leaflet": "^1.9.4",
+    "qrcode.react": "^4.2.0",
+    "react-leaflet": "^5.0.0"
   }
 }

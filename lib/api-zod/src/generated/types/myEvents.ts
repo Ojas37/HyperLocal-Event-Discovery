@@ -9,5 +9,6 @@ import type { Event } from './event';
 
 export interface MyEvents {
   registered: Event[];
+  cancelled: Event[];
   saved: Event[];
 }

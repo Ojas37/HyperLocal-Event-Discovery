@@ -9,6 +9,9 @@ export const organizersTable = pgTable("organizers", {
   type: text("type").notNull().default("community"),
   description: text("description").notNull().default(""),
   verified: boolean("verified").notNull().default(false),
+  verificationStatus: text("verification_status").notNull().default("not_requested"),
+  verificationRequestedAt: timestamp("verification_requested_at", { withTimezone: true }),
+  verificationReviewedAt: timestamp("verification_reviewed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

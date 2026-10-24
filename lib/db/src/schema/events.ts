@@ -30,6 +30,8 @@ export const eventsTable = pgTable(
     timezone: text("timezone").notNull().default("Asia/Kolkata"),
     venue: text("venue").notNull(),
     city: text("city").notNull(),
+    latitude: doublePrecision("latitude"),
+    longitude: doublePrecision("longitude"),
     mode: text("mode").notNull().default("in-person"),
     price: doublePrecision("price").notNull().default(0),
     currency: text("currency").notNull().default("INR"),

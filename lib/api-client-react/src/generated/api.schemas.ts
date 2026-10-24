@@ -15,12 +15,23 @@ export interface OrganizerSummary {
   verified: boolean;
 }
 
+export type OrganizerVerificationStatus = typeof OrganizerVerificationStatus[keyof typeof OrganizerVerificationStatus];
+
+
+export const OrganizerVerificationStatus = {
+  not_requested: 'not_requested',
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
 export interface Organizer {
   id: number;
   name: string;
   type: string;
   description: string;
   verified: boolean;
+  verificationStatus: OrganizerVerificationStatus;
 }
 
 export type OrganizerInputType = typeof OrganizerInputType[keyof typeof OrganizerInputType];
@@ -73,6 +84,7 @@ export type EventRsvpStatus = typeof EventRsvpStatus[keyof typeof EventRsvpStatu
 export const EventRsvpStatus = {
   confirmed: 'confirmed',
   waitlisted: 'waitlisted',
+  cancelled: 'cancelled',
 } as const;
 
 export interface Event {
@@ -88,6 +100,18 @@ export interface Event {
   timezone: string;
   venue: string;
   city: string;
+  /**
+     * @minimum -90
+     * @maximum 90
+     * @nullable
+     */
+  latitude: number | null;
+  /**
+     * @minimum -180
+     * @maximum 180
+     * @nullable
+     */
+  longitude: number | null;
   mode: EventMode;
   price: number;
   currency: string;
@@ -102,6 +126,13 @@ export interface Event {
   attendeeCount: number;
   /** @nullable */
   rsvpStatus: EventRsvpStatus;
+  /** @nullable */
+  rsvpRegistrationCode: string | null;
+  /** @nullable */
+  rsvpCheckedInAt: string | null;
+  organizerFollowing: boolean;
+  /** @nullable */
+  distanceKm: number | null;
   isSaved: boolean;
   organizer: OrganizerSummary;
 }
@@ -134,7 +165,78 @@ export interface EventInput {
   timezone: string;
   venue: string;
   city: string;
+  /**
+     * @minimum -90
+     * @maximum 90
+     * @nullable
+     */
+  latitude: number | null;
+  /**
+     * @minimum -180
+     * @maximum 180
+     * @nullable
+     */
+  longitude: number | null;
   mode: EventInputMode;
+  /** @minimum 0 */
+  price: number;
+  /**
+     * @minLength 3
+     * @maxLength 3
+     */
+  currency: string;
+  /**
+     * @minimum 1
+     * @nullable
+     */
+  capacity: number | null;
+  /** @nullable */
+  registrationDeadline: string | null;
+  /** @nullable */
+  externalUrl: string | null;
+}
+
+export type UpdateEventInputMode = typeof UpdateEventInputMode[keyof typeof UpdateEventInputMode];
+
+
+export const UpdateEventInputMode = {
+  'in-person': 'in-person',
+  hybrid: 'hybrid',
+  online: 'online',
+} as const;
+
+export interface UpdateEventInput {
+  /**
+     * @minLength 5
+     * @maxLength 140
+     */
+  title: string;
+  /**
+     * @minLength 20
+     * @maxLength 5000
+     */
+  description: string;
+  category: string;
+  tags: string[];
+  bannerUrl: string;
+  startAt: string;
+  endAt: string;
+  timezone: string;
+  venue: string;
+  city: string;
+  /**
+     * @minimum -90
+     * @maximum 90
+     * @nullable
+     */
+  latitude: number | null;
+  /**
+     * @minimum -180
+     * @maximum 180
+     * @nullable
+     */
+  longitude: number | null;
+  mode: UpdateEventInputMode;
   /** @minimum 0 */
   price: number;
   /**
@@ -159,6 +261,7 @@ export type RsvpStatus = typeof RsvpStatus[keyof typeof RsvpStatus];
 export const RsvpStatus = {
   confirmed: 'confirmed',
   waitlisted: 'waitlisted',
+  cancelled: 'cancelled',
 } as const;
 
 export interface Rsvp {
@@ -166,10 +269,13 @@ export interface Rsvp {
   eventId: number;
   status: RsvpStatus;
   registrationCode: string;
+  /** @nullable */
+  checkedInAt: string | null;
 }
 
 export interface MyEvents {
   registered: Event[];
+  cancelled: Event[];
   saved: Event[];
 }
 
@@ -180,6 +286,288 @@ export interface OrganizerDashboard {
   draftCount: number;
   confirmedRsvps: number;
   waitlistedRsvps: number;
+}
+
+export type OrganizerAttendeeStatus = typeof OrganizerAttendeeStatus[keyof typeof OrganizerAttendeeStatus];
+
+
+export const OrganizerAttendeeStatus = {
+  confirmed: 'confirmed',
+  waitlisted: 'waitlisted',
+  cancelled: 'cancelled',
+} as const;
+
+export interface OrganizerAttendee {
+  id: number;
+  attendeeRef: string;
+  status: OrganizerAttendeeStatus;
+  registrationCode: string;
+  /** @nullable */
+  checkedInAt: string | null;
+  registeredAt: string;
+}
+
+export interface AttendeeRoster {
+  eventId: number;
+  attendees: OrganizerAttendee[];
+  registeredCount: number;
+  checkedInCount: number;
+  attendanceRate: number;
+}
+
+export interface CheckInInput {
+  /**
+     * @minLength 12
+     * @maxLength 128
+     */
+  registrationCode: string;
+}
+
+export interface CheckInResult {
+  rsvpId: number;
+  eventId: number;
+  attendeeRef: string;
+  checkedInAt: string;
+  alreadyCheckedIn: boolean;
+}
+
+export type EventStaffRole = typeof EventStaffRole[keyof typeof EventStaffRole];
+
+
+export const EventStaffRole = {
+  check_in: 'check_in',
+} as const;
+
+export interface EventStaff {
+  userId: string;
+  role: EventStaffRole;
+  assignedAt: string;
+}
+
+export interface AssignEventStaffInput {
+  /**
+     * @minLength 1
+     * @maxLength 128
+     */
+  userId: string;
+}
+
+export interface EventReview {
+  id: number;
+  eventId: number;
+  reviewerLabel: string;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
+  content: string;
+  createdAt: string;
+}
+
+export interface EventReviewInput {
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
+  /** @maxLength 2000 */
+  content?: string;
+}
+
+export type EventReportStatus = typeof EventReportStatus[keyof typeof EventReportStatus];
+
+
+export const EventReportStatus = {
+  open: 'open',
+  actioned: 'actioned',
+  dismissed: 'dismissed',
+} as const;
+
+export interface EventReport {
+  id: number;
+  eventId: number;
+  eventTitle: string;
+  reporterId: string;
+  reason: string;
+  details: string;
+  status: EventReportStatus;
+  /** @nullable */
+  reviewedBy: string | null;
+  createdAt: string;
+}
+
+export type ReportEventInputReason = typeof ReportEventInputReason[keyof typeof ReportEventInputReason];
+
+
+export const ReportEventInputReason = {
+  spam: 'spam',
+  misleading: 'misleading',
+  unsafe: 'unsafe',
+  inappropriate: 'inappropriate',
+  other: 'other',
+} as const;
+
+export interface ReportEventInput {
+  reason: ReportEventInputReason;
+  /** @maxLength 2000 */
+  details?: string;
+}
+
+export type ModerateReportInputStatus = typeof ModerateReportInputStatus[keyof typeof ModerateReportInputStatus];
+
+
+export const ModerateReportInputStatus = {
+  actioned: 'actioned',
+  dismissed: 'dismissed',
+} as const;
+
+export interface ModerateReportInput {
+  status: ModerateReportInputStatus;
+  cancelEvent: boolean;
+}
+
+export type AdminVerificationInputStatus = typeof AdminVerificationInputStatus[keyof typeof AdminVerificationInputStatus];
+
+
+export const AdminVerificationInputStatus = {
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface AdminVerificationInput {
+  status: AdminVerificationInputStatus;
+}
+
+export interface SuspendUserInput {
+  /**
+     * @minLength 5
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export type AssignUserRoleInputRole = typeof AssignUserRoleInputRole[keyof typeof AssignUserRoleInputRole];
+
+
+export const AssignUserRoleInputRole = {
+  moderator: 'moderator',
+} as const;
+
+export interface AssignUserRoleInput {
+  role: AssignUserRoleInputRole;
+  enabled: boolean;
+}
+
+export interface AdminDashboard {
+  openReports: number;
+  pendingVerifications: number;
+  suspendedUsers: number;
+}
+
+export interface Community {
+  id: number;
+  slug: string;
+  name: string;
+  description: string;
+  topics: string[];
+  /** @nullable */
+  city: string | null;
+  organizer: OrganizerSummary;
+  memberCount: number;
+  isMember: boolean;
+}
+
+export interface CommunityDetail {
+  community: Community;
+  events: Event[];
+}
+
+export interface CommunityInput {
+  /**
+     * @minLength 2
+     * @maxLength 120
+     */
+  name: string;
+  /**
+     * @minLength 10
+     * @maxLength 2000
+     */
+  description: string;
+  /** @items.maxLength 40 */
+  topics: string[];
+  /** @nullable */
+  city: string | null;
+}
+
+export type UserPreferencesProfileVisibility = typeof UserPreferencesProfileVisibility[keyof typeof UserPreferencesProfileVisibility];
+
+
+export const UserPreferencesProfileVisibility = {
+  private: 'private',
+  community: 'community',
+  public: 'public',
+} as const;
+
+export interface UserPreferences {
+  interests: string[];
+  /** @nullable */
+  homeCity: string | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     */
+  preferredRadiusKm: number;
+  showAttendanceBadges: boolean;
+  profileVisibility: UserPreferencesProfileVisibility;
+}
+
+export type UserPreferencesInputProfileVisibility = typeof UserPreferencesInputProfileVisibility[keyof typeof UserPreferencesInputProfileVisibility];
+
+
+export const UserPreferencesInputProfileVisibility = {
+  private: 'private',
+  community: 'community',
+  public: 'public',
+} as const;
+
+export interface UserPreferencesInput {
+  /**
+     * @maxItems 15
+     * @items.minLength 1
+     * @items.maxLength 60
+     */
+  interests: string[];
+  /**
+     * @maxLength 100
+     * @nullable
+     */
+  homeCity: string | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     */
+  preferredRadiusKm: number;
+  showAttendanceBadges: boolean;
+  profileVisibility: UserPreferencesInputProfileVisibility;
+}
+
+export interface Notification {
+  id: number;
+  /** @nullable */
+  eventId: number | null;
+  kind: string;
+  title: string;
+  body: string;
+  /** @nullable */
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface AttendanceBadge {
+  eventId: number;
+  eventTitle: string;
+  issuedAt: string;
 }
 
 export type ListEventsParams = {
@@ -194,6 +582,23 @@ sort?: ListEventsSort;
  * @maximum 50
  */
 limit?: number;
+dateFrom?: string;
+dateTo?: string;
+/**
+ * @minimum -90
+ * @maximum 90
+ */
+latitude?: number;
+/**
+ * @minimum -180
+ * @maximum 180
+ */
+longitude?: number;
+/**
+ * @minimum 1
+ * @maximum 500
+ */
+radiusKm?: number;
 };
 
 export type ListEventsMode = typeof ListEventsMode[keyof typeof ListEventsMode];
@@ -222,4 +627,8 @@ export const ListEventsSort = {
   newest: 'newest',
   popular: 'popular',
 } as const;
+
+export type ListCommunitiesParams = {
+city?: string;
+};
 

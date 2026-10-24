@@ -21,6 +21,8 @@ export const rsvpsTable = pgTable(
     userId: text("user_id").notNull(),
     status: text("status").notNull().default("confirmed"),
     registrationCode: text("registration_code").notNull().unique(),
+    checkedInAt: timestamp("checked_in_at", { withTimezone: true }),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

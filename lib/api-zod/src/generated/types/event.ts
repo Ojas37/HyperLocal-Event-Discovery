@@ -23,6 +23,18 @@ export interface Event {
   timezone: string;
   venue: string;
   city: string;
+  /**
+     * @minimum -90
+     * @maximum 90
+     * @nullable
+     */
+  latitude: number | null;
+  /**
+     * @minimum -180
+     * @maximum 180
+     * @nullable
+     */
+  longitude: number | null;
   mode: EventMode;
   price: number;
   currency: string;
@@ -37,6 +49,13 @@ export interface Event {
   attendeeCount: number;
   /** @nullable */
   rsvpStatus: EventRsvpStatus;
+  /** @nullable */
+  rsvpRegistrationCode: string | null;
+  /** @nullable */
+  rsvpCheckedInAt: Date | null;
+  organizerFollowing: boolean;
+  /** @nullable */
+  distanceKm: number | null;
   isSaved: boolean;
   organizer: OrganizerSummary;
 }

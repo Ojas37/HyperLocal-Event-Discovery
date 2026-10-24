@@ -23,6 +23,14 @@ export const HealthCheckResponse = zod.object({
 export const listEventsQueryLimitDefault = 20;
 export const listEventsQueryLimitMax = 50;
 
+export const listEventsQueryLatitudeMin = -90;
+export const listEventsQueryLatitudeMax = 90;
+
+export const listEventsQueryLongitudeMin = -180;
+export const listEventsQueryLongitudeMax = 180;
+
+export const listEventsQueryRadiusKmMax = 500;
+
 
 
 export const ListEventsQueryParams = zod.object({
@@ -32,8 +40,21 @@ export const ListEventsQueryParams = zod.object({
   "mode": zod.enum(['in-person', 'hybrid', 'online']).optional(),
   "price": zod.enum(['free', 'paid']).optional(),
   "sort": zod.enum(['relevance', 'soonest', 'newest', 'popular']).optional(),
-  "limit": zod.coerce.number().int().min(1).max(listEventsQueryLimitMax).default(listEventsQueryLimitDefault)
+  "limit": zod.coerce.number().int().min(1).max(listEventsQueryLimitMax).default(listEventsQueryLimitDefault),
+  "dateFrom": zod.date().optional(),
+  "dateTo": zod.date().optional(),
+  "latitude": zod.coerce.number().min(listEventsQueryLatitudeMin).max(listEventsQueryLatitudeMax).optional(),
+  "longitude": zod.coerce.number().min(listEventsQueryLongitudeMin).max(listEventsQueryLongitudeMax).optional(),
+  "radiusKm": zod.coerce.number().min(1).max(listEventsQueryRadiusKmMax).optional()
 })
+
+export const listEventsResponseLatitudeMin = -90;
+export const listEventsResponseLatitudeMax = 90;
+
+export const listEventsResponseLongitudeMin = -180;
+export const listEventsResponseLongitudeMax = 180;
+
+
 
 export const ListEventsResponseItem = zod.object({
   "id": zod.number().int(),
@@ -48,6 +69,8 @@ export const ListEventsResponseItem = zod.object({
   "timezone": zod.string(),
   "venue": zod.string(),
   "city": zod.string(),
+  "latitude": zod.number().min(listEventsResponseLatitudeMin).max(listEventsResponseLatitudeMax).nullable(),
+  "longitude": zod.number().min(listEventsResponseLongitudeMin).max(listEventsResponseLongitudeMax).nullable(),
   "mode": zod.enum(['in-person', 'hybrid', 'online']),
   "price": zod.number(),
   "currency": zod.string(),
@@ -57,7 +80,11 @@ export const ListEventsResponseItem = zod.object({
   "status": zod.enum(['draft', 'published', 'cancelled', 'completed']),
   "isDemo": zod.boolean(),
   "attendeeCount": zod.number().int(),
-  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal(null)]).nullable(),
+  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal('cancelled'),zod.literal(null)]).nullable(),
+  "rsvpRegistrationCode": zod.string().nullable(),
+  "rsvpCheckedInAt": zod.coerce.date().nullable(),
+  "organizerFollowing": zod.boolean(),
+  "distanceKm": zod.number().nullable(),
   "isSaved": zod.boolean(),
   "organizer": zod.object({
   "id": zod.number().int(),
@@ -71,6 +98,14 @@ export const ListEventsResponse = zod.array(ListEventsResponseItem)
 /**
  * @summary Get featured upcoming events
  */
+export const getFeaturedEventsResponseLatitudeMin = -90;
+export const getFeaturedEventsResponseLatitudeMax = 90;
+
+export const getFeaturedEventsResponseLongitudeMin = -180;
+export const getFeaturedEventsResponseLongitudeMax = 180;
+
+
+
 export const GetFeaturedEventsResponseItem = zod.object({
   "id": zod.number().int(),
   "title": zod.string(),
@@ -84,6 +119,8 @@ export const GetFeaturedEventsResponseItem = zod.object({
   "timezone": zod.string(),
   "venue": zod.string(),
   "city": zod.string(),
+  "latitude": zod.number().min(getFeaturedEventsResponseLatitudeMin).max(getFeaturedEventsResponseLatitudeMax).nullable(),
+  "longitude": zod.number().min(getFeaturedEventsResponseLongitudeMin).max(getFeaturedEventsResponseLongitudeMax).nullable(),
   "mode": zod.enum(['in-person', 'hybrid', 'online']),
   "price": zod.number(),
   "currency": zod.string(),
@@ -93,7 +130,11 @@ export const GetFeaturedEventsResponseItem = zod.object({
   "status": zod.enum(['draft', 'published', 'cancelled', 'completed']),
   "isDemo": zod.boolean(),
   "attendeeCount": zod.number().int(),
-  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal(null)]).nullable(),
+  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal('cancelled'),zod.literal(null)]).nullable(),
+  "rsvpRegistrationCode": zod.string().nullable(),
+  "rsvpCheckedInAt": zod.coerce.date().nullable(),
+  "organizerFollowing": zod.boolean(),
+  "distanceKm": zod.number().nullable(),
   "isSaved": zod.boolean(),
   "organizer": zod.object({
   "id": zod.number().int(),
@@ -111,6 +152,14 @@ export const GetEventParams = zod.object({
   "eventId": zod.coerce.number().int()
 })
 
+export const getEventResponseLatitudeMin = -90;
+export const getEventResponseLatitudeMax = 90;
+
+export const getEventResponseLongitudeMin = -180;
+export const getEventResponseLongitudeMax = 180;
+
+
+
 export const GetEventResponse = zod.object({
   "id": zod.number().int(),
   "title": zod.string(),
@@ -124,6 +173,8 @@ export const GetEventResponse = zod.object({
   "timezone": zod.string(),
   "venue": zod.string(),
   "city": zod.string(),
+  "latitude": zod.number().min(getEventResponseLatitudeMin).max(getEventResponseLatitudeMax).nullable(),
+  "longitude": zod.number().min(getEventResponseLongitudeMin).max(getEventResponseLongitudeMax).nullable(),
   "mode": zod.enum(['in-person', 'hybrid', 'online']),
   "price": zod.number(),
   "currency": zod.string(),
@@ -133,7 +184,11 @@ export const GetEventResponse = zod.object({
   "status": zod.enum(['draft', 'published', 'cancelled', 'completed']),
   "isDemo": zod.boolean(),
   "attendeeCount": zod.number().int(),
-  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal(null)]).nullable(),
+  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal('cancelled'),zod.literal(null)]).nullable(),
+  "rsvpRegistrationCode": zod.string().nullable(),
+  "rsvpCheckedInAt": zod.coerce.date().nullable(),
+  "organizerFollowing": zod.boolean(),
+  "distanceKm": zod.number().nullable(),
   "isSaved": zod.boolean(),
   "organizer": zod.object({
   "id": zod.number().int(),
@@ -153,8 +208,9 @@ export const CreateRsvpParams = zod.object({
 export const CreateRsvpResponse = zod.object({
   "id": zod.number().int(),
   "eventId": zod.number().int(),
-  "status": zod.enum(['confirmed', 'waitlisted']),
-  "registrationCode": zod.string()
+  "status": zod.enum(['confirmed', 'waitlisted', 'cancelled']),
+  "registrationCode": zod.string(),
+  "checkedInAt": zod.coerce.date().nullable()
 })
 
 
@@ -191,6 +247,26 @@ export const UnsaveEventResponse = zod.void()
 /**
  * @summary Get the current user's RSVPs and saved events
  */
+export const getMyEventsResponseRegisteredItemLatitudeMin = -90;
+export const getMyEventsResponseRegisteredItemLatitudeMax = 90;
+
+export const getMyEventsResponseRegisteredItemLongitudeMin = -180;
+export const getMyEventsResponseRegisteredItemLongitudeMax = 180;
+
+export const getMyEventsResponseCancelledItemLatitudeMin = -90;
+export const getMyEventsResponseCancelledItemLatitudeMax = 90;
+
+export const getMyEventsResponseCancelledItemLongitudeMin = -180;
+export const getMyEventsResponseCancelledItemLongitudeMax = 180;
+
+export const getMyEventsResponseSavedItemLatitudeMin = -90;
+export const getMyEventsResponseSavedItemLatitudeMax = 90;
+
+export const getMyEventsResponseSavedItemLongitudeMin = -180;
+export const getMyEventsResponseSavedItemLongitudeMax = 180;
+
+
+
 export const GetMyEventsResponse = zod.object({
   "registered": zod.array(zod.object({
   "id": zod.number().int(),
@@ -205,6 +281,8 @@ export const GetMyEventsResponse = zod.object({
   "timezone": zod.string(),
   "venue": zod.string(),
   "city": zod.string(),
+  "latitude": zod.number().min(getMyEventsResponseRegisteredItemLatitudeMin).max(getMyEventsResponseRegisteredItemLatitudeMax).nullable(),
+  "longitude": zod.number().min(getMyEventsResponseRegisteredItemLongitudeMin).max(getMyEventsResponseRegisteredItemLongitudeMax).nullable(),
   "mode": zod.enum(['in-person', 'hybrid', 'online']),
   "price": zod.number(),
   "currency": zod.string(),
@@ -214,7 +292,47 @@ export const GetMyEventsResponse = zod.object({
   "status": zod.enum(['draft', 'published', 'cancelled', 'completed']),
   "isDemo": zod.boolean(),
   "attendeeCount": zod.number().int(),
-  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal(null)]).nullable(),
+  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal('cancelled'),zod.literal(null)]).nullable(),
+  "rsvpRegistrationCode": zod.string().nullable(),
+  "rsvpCheckedInAt": zod.coerce.date().nullable(),
+  "organizerFollowing": zod.boolean(),
+  "distanceKm": zod.number().nullable(),
+  "isSaved": zod.boolean(),
+  "organizer": zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "verified": zod.boolean()
+})
+})),
+  "cancelled": zod.array(zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "slug": zod.string(),
+  "description": zod.string(),
+  "category": zod.string(),
+  "tags": zod.array(zod.string()),
+  "bannerUrl": zod.string(),
+  "startAt": zod.coerce.date(),
+  "endAt": zod.coerce.date(),
+  "timezone": zod.string(),
+  "venue": zod.string(),
+  "city": zod.string(),
+  "latitude": zod.number().min(getMyEventsResponseCancelledItemLatitudeMin).max(getMyEventsResponseCancelledItemLatitudeMax).nullable(),
+  "longitude": zod.number().min(getMyEventsResponseCancelledItemLongitudeMin).max(getMyEventsResponseCancelledItemLongitudeMax).nullable(),
+  "mode": zod.enum(['in-person', 'hybrid', 'online']),
+  "price": zod.number(),
+  "currency": zod.string(),
+  "capacity": zod.number().int().nullable(),
+  "registrationDeadline": zod.coerce.date().nullable(),
+  "externalUrl": zod.string().nullable(),
+  "status": zod.enum(['draft', 'published', 'cancelled', 'completed']),
+  "isDemo": zod.boolean(),
+  "attendeeCount": zod.number().int(),
+  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal('cancelled'),zod.literal(null)]).nullable(),
+  "rsvpRegistrationCode": zod.string().nullable(),
+  "rsvpCheckedInAt": zod.coerce.date().nullable(),
+  "organizerFollowing": zod.boolean(),
+  "distanceKm": zod.number().nullable(),
   "isSaved": zod.boolean(),
   "organizer": zod.object({
   "id": zod.number().int(),
@@ -235,6 +353,8 @@ export const GetMyEventsResponse = zod.object({
   "timezone": zod.string(),
   "venue": zod.string(),
   "city": zod.string(),
+  "latitude": zod.number().min(getMyEventsResponseSavedItemLatitudeMin).max(getMyEventsResponseSavedItemLatitudeMax).nullable(),
+  "longitude": zod.number().min(getMyEventsResponseSavedItemLongitudeMin).max(getMyEventsResponseSavedItemLongitudeMax).nullable(),
   "mode": zod.enum(['in-person', 'hybrid', 'online']),
   "price": zod.number(),
   "currency": zod.string(),
@@ -244,7 +364,11 @@ export const GetMyEventsResponse = zod.object({
   "status": zod.enum(['draft', 'published', 'cancelled', 'completed']),
   "isDemo": zod.boolean(),
   "attendeeCount": zod.number().int(),
-  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal(null)]).nullable(),
+  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal('cancelled'),zod.literal(null)]).nullable(),
+  "rsvpRegistrationCode": zod.string().nullable(),
+  "rsvpCheckedInAt": zod.coerce.date().nullable(),
+  "organizerFollowing": zod.boolean(),
+  "distanceKm": zod.number().nullable(),
   "isSaved": zod.boolean(),
   "organizer": zod.object({
   "id": zod.number().int(),
@@ -263,7 +387,8 @@ export const GetMyOrganizerResponse = zod.union([zod.object({
   "name": zod.string(),
   "type": zod.string(),
   "description": zod.string(),
-  "verified": zod.boolean()
+  "verified": zod.boolean(),
+  "verificationStatus": zod.enum(['not_requested', 'pending', 'approved', 'rejected'])
 }),zod.null()])
 
 
@@ -288,20 +413,30 @@ export const CreateOrganizerResponse = zod.object({
   "name": zod.string(),
   "type": zod.string(),
   "description": zod.string(),
-  "verified": zod.boolean()
+  "verified": zod.boolean(),
+  "verificationStatus": zod.enum(['not_requested', 'pending', 'approved', 'rejected'])
 })
 
 
 /**
  * @summary Get organizer events and live RSVP counts
  */
+export const getOrganizerDashboardResponseEventsItemLatitudeMin = -90;
+export const getOrganizerDashboardResponseEventsItemLatitudeMax = 90;
+
+export const getOrganizerDashboardResponseEventsItemLongitudeMin = -180;
+export const getOrganizerDashboardResponseEventsItemLongitudeMax = 180;
+
+
+
 export const GetOrganizerDashboardResponse = zod.object({
   "organizer": zod.object({
   "id": zod.number().int(),
   "name": zod.string(),
   "type": zod.string(),
   "description": zod.string(),
-  "verified": zod.boolean()
+  "verified": zod.boolean(),
+  "verificationStatus": zod.enum(['not_requested', 'pending', 'approved', 'rejected'])
 }),
   "events": zod.array(zod.object({
   "id": zod.number().int(),
@@ -316,6 +451,8 @@ export const GetOrganizerDashboardResponse = zod.object({
   "timezone": zod.string(),
   "venue": zod.string(),
   "city": zod.string(),
+  "latitude": zod.number().min(getOrganizerDashboardResponseEventsItemLatitudeMin).max(getOrganizerDashboardResponseEventsItemLatitudeMax).nullable(),
+  "longitude": zod.number().min(getOrganizerDashboardResponseEventsItemLongitudeMin).max(getOrganizerDashboardResponseEventsItemLongitudeMax).nullable(),
   "mode": zod.enum(['in-person', 'hybrid', 'online']),
   "price": zod.number(),
   "currency": zod.string(),
@@ -325,7 +462,11 @@ export const GetOrganizerDashboardResponse = zod.object({
   "status": zod.enum(['draft', 'published', 'cancelled', 'completed']),
   "isDemo": zod.boolean(),
   "attendeeCount": zod.number().int(),
-  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal(null)]).nullable(),
+  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal('cancelled'),zod.literal(null)]).nullable(),
+  "rsvpRegistrationCode": zod.string().nullable(),
+  "rsvpCheckedInAt": zod.coerce.date().nullable(),
+  "organizerFollowing": zod.boolean(),
+  "distanceKm": zod.number().nullable(),
   "isSaved": zod.boolean(),
   "organizer": zod.object({
   "id": zod.number().int(),
@@ -349,6 +490,12 @@ export const createOrganizerEventBodyTitleMax = 140;
 export const createOrganizerEventBodyDescriptionMin = 20;
 export const createOrganizerEventBodyDescriptionMax = 5000;
 
+export const createOrganizerEventBodyLatitudeMin = -90;
+export const createOrganizerEventBodyLatitudeMax = 90;
+
+export const createOrganizerEventBodyLongitudeMin = -180;
+export const createOrganizerEventBodyLongitudeMax = 180;
+
 export const createOrganizerEventBodyPriceMin = 0;
 
 export const createOrganizerEventBodyCurrencyMin = 3;
@@ -368,6 +515,8 @@ export const CreateOrganizerEventBody = zod.object({
   "timezone": zod.string(),
   "venue": zod.string(),
   "city": zod.string(),
+  "latitude": zod.number().min(createOrganizerEventBodyLatitudeMin).max(createOrganizerEventBodyLatitudeMax).nullable(),
+  "longitude": zod.number().min(createOrganizerEventBodyLongitudeMin).max(createOrganizerEventBodyLongitudeMax).nullable(),
   "mode": zod.enum(['in-person', 'hybrid', 'online']),
   "price": zod.number().min(createOrganizerEventBodyPriceMin),
   "currency": zod.string().min(createOrganizerEventBodyCurrencyMin).max(createOrganizerEventBodyCurrencyMax),
@@ -375,6 +524,14 @@ export const CreateOrganizerEventBody = zod.object({
   "registrationDeadline": zod.coerce.date().nullable(),
   "externalUrl": zod.string().nullable()
 })
+
+export const createOrganizerEventResponseLatitudeMin = -90;
+export const createOrganizerEventResponseLatitudeMax = 90;
+
+export const createOrganizerEventResponseLongitudeMin = -180;
+export const createOrganizerEventResponseLongitudeMax = 180;
+
+
 
 export const CreateOrganizerEventResponse = zod.object({
   "id": zod.number().int(),
@@ -389,6 +546,8 @@ export const CreateOrganizerEventResponse = zod.object({
   "timezone": zod.string(),
   "venue": zod.string(),
   "city": zod.string(),
+  "latitude": zod.number().min(createOrganizerEventResponseLatitudeMin).max(createOrganizerEventResponseLatitudeMax).nullable(),
+  "longitude": zod.number().min(createOrganizerEventResponseLongitudeMin).max(createOrganizerEventResponseLongitudeMax).nullable(),
   "mode": zod.enum(['in-person', 'hybrid', 'online']),
   "price": zod.number(),
   "currency": zod.string(),
@@ -398,7 +557,11 @@ export const CreateOrganizerEventResponse = zod.object({
   "status": zod.enum(['draft', 'published', 'cancelled', 'completed']),
   "isDemo": zod.boolean(),
   "attendeeCount": zod.number().int(),
-  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal(null)]).nullable(),
+  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal('cancelled'),zod.literal(null)]).nullable(),
+  "rsvpRegistrationCode": zod.string().nullable(),
+  "rsvpCheckedInAt": zod.coerce.date().nullable(),
+  "organizerFollowing": zod.boolean(),
+  "distanceKm": zod.number().nullable(),
   "isSaved": zod.boolean(),
   "organizer": zod.object({
   "id": zod.number().int(),
@@ -415,6 +578,14 @@ export const PublishOrganizerEventParams = zod.object({
   "eventId": zod.coerce.number().int()
 })
 
+export const publishOrganizerEventResponseLatitudeMin = -90;
+export const publishOrganizerEventResponseLatitudeMax = 90;
+
+export const publishOrganizerEventResponseLongitudeMin = -180;
+export const publishOrganizerEventResponseLongitudeMax = 180;
+
+
+
 export const PublishOrganizerEventResponse = zod.object({
   "id": zod.number().int(),
   "title": zod.string(),
@@ -428,6 +599,8 @@ export const PublishOrganizerEventResponse = zod.object({
   "timezone": zod.string(),
   "venue": zod.string(),
   "city": zod.string(),
+  "latitude": zod.number().min(publishOrganizerEventResponseLatitudeMin).max(publishOrganizerEventResponseLatitudeMax).nullable(),
+  "longitude": zod.number().min(publishOrganizerEventResponseLongitudeMin).max(publishOrganizerEventResponseLongitudeMax).nullable(),
   "mode": zod.enum(['in-person', 'hybrid', 'online']),
   "price": zod.number(),
   "currency": zod.string(),
@@ -437,7 +610,11 @@ export const PublishOrganizerEventResponse = zod.object({
   "status": zod.enum(['draft', 'published', 'cancelled', 'completed']),
   "isDemo": zod.boolean(),
   "attendeeCount": zod.number().int(),
-  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal(null)]).nullable(),
+  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal('cancelled'),zod.literal(null)]).nullable(),
+  "rsvpRegistrationCode": zod.string().nullable(),
+  "rsvpCheckedInAt": zod.coerce.date().nullable(),
+  "organizerFollowing": zod.boolean(),
+  "distanceKm": zod.number().nullable(),
   "isSaved": zod.boolean(),
   "organizer": zod.object({
   "id": zod.number().int(),
@@ -445,5 +622,779 @@ export const PublishOrganizerEventResponse = zod.object({
   "verified": zod.boolean()
 })
 })
+
+
+/**
+ * @summary Update an event owned by the current organizer
+ */
+export const UpdateOrganizerEventParams = zod.object({
+  "eventId": zod.coerce.number().int()
+})
+
+export const updateOrganizerEventBodyTitleMin = 5;
+export const updateOrganizerEventBodyTitleMax = 140;
+
+export const updateOrganizerEventBodyDescriptionMin = 20;
+export const updateOrganizerEventBodyDescriptionMax = 5000;
+
+export const updateOrganizerEventBodyLatitudeMin = -90;
+export const updateOrganizerEventBodyLatitudeMax = 90;
+
+export const updateOrganizerEventBodyLongitudeMin = -180;
+export const updateOrganizerEventBodyLongitudeMax = 180;
+
+export const updateOrganizerEventBodyPriceMin = 0;
+
+export const updateOrganizerEventBodyCurrencyMin = 3;
+export const updateOrganizerEventBodyCurrencyMax = 3;
+
+
+
+
+export const UpdateOrganizerEventBody = zod.object({
+  "title": zod.string().min(updateOrganizerEventBodyTitleMin).max(updateOrganizerEventBodyTitleMax),
+  "description": zod.string().min(updateOrganizerEventBodyDescriptionMin).max(updateOrganizerEventBodyDescriptionMax),
+  "category": zod.string(),
+  "tags": zod.array(zod.string()),
+  "bannerUrl": zod.string(),
+  "startAt": zod.coerce.date(),
+  "endAt": zod.coerce.date(),
+  "timezone": zod.string(),
+  "venue": zod.string(),
+  "city": zod.string(),
+  "latitude": zod.number().min(updateOrganizerEventBodyLatitudeMin).max(updateOrganizerEventBodyLatitudeMax).nullable(),
+  "longitude": zod.number().min(updateOrganizerEventBodyLongitudeMin).max(updateOrganizerEventBodyLongitudeMax).nullable(),
+  "mode": zod.enum(['in-person', 'hybrid', 'online']),
+  "price": zod.number().min(updateOrganizerEventBodyPriceMin),
+  "currency": zod.string().min(updateOrganizerEventBodyCurrencyMin).max(updateOrganizerEventBodyCurrencyMax),
+  "capacity": zod.number().int().min(1).nullable(),
+  "registrationDeadline": zod.coerce.date().nullable(),
+  "externalUrl": zod.string().nullable()
+})
+
+export const updateOrganizerEventResponseLatitudeMin = -90;
+export const updateOrganizerEventResponseLatitudeMax = 90;
+
+export const updateOrganizerEventResponseLongitudeMin = -180;
+export const updateOrganizerEventResponseLongitudeMax = 180;
+
+
+
+export const UpdateOrganizerEventResponse = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "slug": zod.string(),
+  "description": zod.string(),
+  "category": zod.string(),
+  "tags": zod.array(zod.string()),
+  "bannerUrl": zod.string(),
+  "startAt": zod.coerce.date(),
+  "endAt": zod.coerce.date(),
+  "timezone": zod.string(),
+  "venue": zod.string(),
+  "city": zod.string(),
+  "latitude": zod.number().min(updateOrganizerEventResponseLatitudeMin).max(updateOrganizerEventResponseLatitudeMax).nullable(),
+  "longitude": zod.number().min(updateOrganizerEventResponseLongitudeMin).max(updateOrganizerEventResponseLongitudeMax).nullable(),
+  "mode": zod.enum(['in-person', 'hybrid', 'online']),
+  "price": zod.number(),
+  "currency": zod.string(),
+  "capacity": zod.number().int().nullable(),
+  "registrationDeadline": zod.coerce.date().nullable(),
+  "externalUrl": zod.string().nullable(),
+  "status": zod.enum(['draft', 'published', 'cancelled', 'completed']),
+  "isDemo": zod.boolean(),
+  "attendeeCount": zod.number().int(),
+  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal('cancelled'),zod.literal(null)]).nullable(),
+  "rsvpRegistrationCode": zod.string().nullable(),
+  "rsvpCheckedInAt": zod.coerce.date().nullable(),
+  "organizerFollowing": zod.boolean(),
+  "distanceKm": zod.number().nullable(),
+  "isSaved": zod.boolean(),
+  "organizer": zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "verified": zod.boolean()
+})
+})
+
+
+/**
+ * @summary Cancel an event and notify attendees
+ */
+export const CancelOrganizerEventParams = zod.object({
+  "eventId": zod.coerce.number().int()
+})
+
+export const cancelOrganizerEventResponseLatitudeMin = -90;
+export const cancelOrganizerEventResponseLatitudeMax = 90;
+
+export const cancelOrganizerEventResponseLongitudeMin = -180;
+export const cancelOrganizerEventResponseLongitudeMax = 180;
+
+
+
+export const CancelOrganizerEventResponse = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "slug": zod.string(),
+  "description": zod.string(),
+  "category": zod.string(),
+  "tags": zod.array(zod.string()),
+  "bannerUrl": zod.string(),
+  "startAt": zod.coerce.date(),
+  "endAt": zod.coerce.date(),
+  "timezone": zod.string(),
+  "venue": zod.string(),
+  "city": zod.string(),
+  "latitude": zod.number().min(cancelOrganizerEventResponseLatitudeMin).max(cancelOrganizerEventResponseLatitudeMax).nullable(),
+  "longitude": zod.number().min(cancelOrganizerEventResponseLongitudeMin).max(cancelOrganizerEventResponseLongitudeMax).nullable(),
+  "mode": zod.enum(['in-person', 'hybrid', 'online']),
+  "price": zod.number(),
+  "currency": zod.string(),
+  "capacity": zod.number().int().nullable(),
+  "registrationDeadline": zod.coerce.date().nullable(),
+  "externalUrl": zod.string().nullable(),
+  "status": zod.enum(['draft', 'published', 'cancelled', 'completed']),
+  "isDemo": zod.boolean(),
+  "attendeeCount": zod.number().int(),
+  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal('cancelled'),zod.literal(null)]).nullable(),
+  "rsvpRegistrationCode": zod.string().nullable(),
+  "rsvpCheckedInAt": zod.coerce.date().nullable(),
+  "organizerFollowing": zod.boolean(),
+  "distanceKm": zod.number().nullable(),
+  "isSaved": zod.boolean(),
+  "organizer": zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "verified": zod.boolean()
+})
+})
+
+
+/**
+ * @summary List event registrations for an owner or assigned staff member
+ */
+export const GetOrganizerAttendeesParams = zod.object({
+  "eventId": zod.coerce.number().int()
+})
+
+export const GetOrganizerAttendeesResponse = zod.object({
+  "eventId": zod.number().int(),
+  "attendees": zod.array(zod.object({
+  "id": zod.number().int(),
+  "attendeeRef": zod.string(),
+  "status": zod.enum(['confirmed', 'waitlisted', 'cancelled']),
+  "registrationCode": zod.string(),
+  "checkedInAt": zod.coerce.date().nullable(),
+  "registeredAt": zod.coerce.date()
+})),
+  "registeredCount": zod.number().int(),
+  "checkedInCount": zod.number().int(),
+  "attendanceRate": zod.number()
+})
+
+
+/**
+ * @summary Validate and check in one confirmed attendee
+ */
+export const CheckInAttendeeParams = zod.object({
+  "eventId": zod.coerce.number().int()
+})
+
+export const checkInAttendeeBodyRegistrationCodeMin = 12;
+export const checkInAttendeeBodyRegistrationCodeMax = 128;
+
+
+
+export const CheckInAttendeeBody = zod.object({
+  "registrationCode": zod.string().min(checkInAttendeeBodyRegistrationCodeMin).max(checkInAttendeeBodyRegistrationCodeMax)
+})
+
+export const CheckInAttendeeResponse = zod.object({
+  "rsvpId": zod.number().int(),
+  "eventId": zod.number().int(),
+  "attendeeRef": zod.string(),
+  "checkedInAt": zod.coerce.date(),
+  "alreadyCheckedIn": zod.boolean()
+})
+
+
+/**
+ * @summary List assigned event check-in staff
+ */
+export const ListEventStaffParams = zod.object({
+  "eventId": zod.coerce.number().int()
+})
+
+export const ListEventStaffResponseItem = zod.object({
+  "userId": zod.string(),
+  "role": zod.enum(['check_in']),
+  "assignedAt": zod.coerce.date()
+})
+export const ListEventStaffResponse = zod.array(ListEventStaffResponseItem)
+
+
+/**
+ * @summary Assign a Clerk user to event check-in
+ */
+export const AssignEventStaffParams = zod.object({
+  "eventId": zod.coerce.number().int()
+})
+
+export const assignEventStaffBodyUserIdMax = 128;
+
+
+
+export const AssignEventStaffBody = zod.object({
+  "userId": zod.string().min(1).max(assignEventStaffBodyUserIdMax)
+})
+
+export const AssignEventStaffResponse = zod.object({
+  "userId": zod.string(),
+  "role": zod.enum(['check_in']),
+  "assignedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Remove an event check-in staff assignment
+ */
+export const RemoveEventStaffParams = zod.object({
+  "eventId": zod.coerce.number().int(),
+  "userId": zod.coerce.string()
+})
+
+export const RemoveEventStaffResponse = zod.void()
+
+
+/**
+ * @summary Download the event registration roster as CSV
+ */
+export const ExportOrganizerRegistrationsParams = zod.object({
+  "eventId": zod.coerce.number().int()
+})
+
+export const ExportOrganizerRegistrationsResponse = zod.unknown()
+
+
+/**
+ * @summary Request organizer profile verification
+ */
+export const RequestOrganizerVerificationResponse = zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "type": zod.string(),
+  "description": zod.string(),
+  "verified": zod.boolean(),
+  "verificationStatus": zod.enum(['not_requested', 'pending', 'approved', 'rejected'])
+})
+
+
+/**
+ * @summary Report an event to LocalLoop moderators
+ */
+export const ReportEventParams = zod.object({
+  "eventId": zod.coerce.number().int()
+})
+
+export const reportEventBodyDetailsMax = 2000;
+
+
+
+export const ReportEventBody = zod.object({
+  "reason": zod.enum(['spam', 'misleading', 'unsafe', 'inappropriate', 'other']),
+  "details": zod.string().max(reportEventBodyDetailsMax).optional()
+})
+
+export const ReportEventResponse = zod.object({
+  "id": zod.number().int(),
+  "eventId": zod.number().int(),
+  "eventTitle": zod.string(),
+  "reporterId": zod.string(),
+  "reason": zod.string(),
+  "details": zod.string(),
+  "status": zod.enum(['open', 'actioned', 'dismissed']),
+  "reviewedBy": zod.string().nullable(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary List attendee feedback for an event
+ */
+export const ListEventReviewsParams = zod.object({
+  "eventId": zod.coerce.number().int()
+})
+
+export const listEventReviewsResponseRatingMax = 5;
+
+
+
+export const ListEventReviewsResponseItem = zod.object({
+  "id": zod.number().int(),
+  "eventId": zod.number().int(),
+  "reviewerLabel": zod.string(),
+  "rating": zod.number().int().min(1).max(listEventReviewsResponseRatingMax),
+  "content": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+export const ListEventReviewsResponse = zod.array(ListEventReviewsResponseItem)
+
+
+/**
+ * @summary Leave feedback after verified attendance
+ */
+export const CreateEventReviewParams = zod.object({
+  "eventId": zod.coerce.number().int()
+})
+
+export const createEventReviewBodyRatingMax = 5;
+
+export const createEventReviewBodyContentMax = 2000;
+
+
+
+export const CreateEventReviewBody = zod.object({
+  "rating": zod.number().int().min(1).max(createEventReviewBodyRatingMax),
+  "content": zod.string().max(createEventReviewBodyContentMax).optional()
+})
+
+export const createEventReviewResponseRatingMax = 5;
+
+
+
+export const CreateEventReviewResponse = zod.object({
+  "id": zod.number().int(),
+  "eventId": zod.number().int(),
+  "reviewerLabel": zod.string(),
+  "rating": zod.number().int().min(1).max(createEventReviewResponseRatingMax),
+  "content": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Follow an organizer
+ */
+export const FollowOrganizerParams = zod.object({
+  "organizerId": zod.coerce.number().int()
+})
+
+export const FollowOrganizerResponse = zod.void()
+
+
+/**
+ * @summary Unfollow an organizer
+ */
+export const UnfollowOrganizerParams = zod.object({
+  "organizerId": zod.coerce.number().int()
+})
+
+export const UnfollowOrganizerResponse = zod.void()
+
+
+/**
+ * @summary List public communities
+ */
+export const ListCommunitiesQueryParams = zod.object({
+  "city": zod.coerce.string().optional()
+})
+
+export const ListCommunitiesResponseItem = zod.object({
+  "id": zod.number().int(),
+  "slug": zod.string(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "topics": zod.array(zod.string()),
+  "city": zod.string().nullable(),
+  "organizer": zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "verified": zod.boolean()
+}),
+  "memberCount": zod.number().int(),
+  "isMember": zod.boolean()
+})
+export const ListCommunitiesResponse = zod.array(ListCommunitiesResponseItem)
+
+
+/**
+ * @summary Create a community for the current organizer
+ */
+export const createCommunityBodyNameMin = 2;
+export const createCommunityBodyNameMax = 120;
+
+export const createCommunityBodyDescriptionMin = 10;
+export const createCommunityBodyDescriptionMax = 2000;
+
+export const createCommunityBodyTopicsItemMax = 40;
+
+
+
+export const CreateCommunityBody = zod.object({
+  "name": zod.string().min(createCommunityBodyNameMin).max(createCommunityBodyNameMax),
+  "description": zod.string().min(createCommunityBodyDescriptionMin).max(createCommunityBodyDescriptionMax),
+  "topics": zod.array(zod.string().max(createCommunityBodyTopicsItemMax)),
+  "city": zod.string().nullable()
+})
+
+export const CreateCommunityResponse = zod.object({
+  "id": zod.number().int(),
+  "slug": zod.string(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "topics": zod.array(zod.string()),
+  "city": zod.string().nullable(),
+  "organizer": zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "verified": zod.boolean()
+}),
+  "memberCount": zod.number().int(),
+  "isMember": zod.boolean()
+})
+
+
+/**
+ * @summary Get a public community and upcoming events
+ */
+export const GetCommunityParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const getCommunityResponseEventsItemLatitudeMin = -90;
+export const getCommunityResponseEventsItemLatitudeMax = 90;
+
+export const getCommunityResponseEventsItemLongitudeMin = -180;
+export const getCommunityResponseEventsItemLongitudeMax = 180;
+
+
+
+export const GetCommunityResponse = zod.object({
+  "community": zod.object({
+  "id": zod.number().int(),
+  "slug": zod.string(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "topics": zod.array(zod.string()),
+  "city": zod.string().nullable(),
+  "organizer": zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "verified": zod.boolean()
+}),
+  "memberCount": zod.number().int(),
+  "isMember": zod.boolean()
+}),
+  "events": zod.array(zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "slug": zod.string(),
+  "description": zod.string(),
+  "category": zod.string(),
+  "tags": zod.array(zod.string()),
+  "bannerUrl": zod.string(),
+  "startAt": zod.coerce.date(),
+  "endAt": zod.coerce.date(),
+  "timezone": zod.string(),
+  "venue": zod.string(),
+  "city": zod.string(),
+  "latitude": zod.number().min(getCommunityResponseEventsItemLatitudeMin).max(getCommunityResponseEventsItemLatitudeMax).nullable(),
+  "longitude": zod.number().min(getCommunityResponseEventsItemLongitudeMin).max(getCommunityResponseEventsItemLongitudeMax).nullable(),
+  "mode": zod.enum(['in-person', 'hybrid', 'online']),
+  "price": zod.number(),
+  "currency": zod.string(),
+  "capacity": zod.number().int().nullable(),
+  "registrationDeadline": zod.coerce.date().nullable(),
+  "externalUrl": zod.string().nullable(),
+  "status": zod.enum(['draft', 'published', 'cancelled', 'completed']),
+  "isDemo": zod.boolean(),
+  "attendeeCount": zod.number().int(),
+  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal('cancelled'),zod.literal(null)]).nullable(),
+  "rsvpRegistrationCode": zod.string().nullable(),
+  "rsvpCheckedInAt": zod.coerce.date().nullable(),
+  "organizerFollowing": zod.boolean(),
+  "distanceKm": zod.number().nullable(),
+  "isSaved": zod.boolean(),
+  "organizer": zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "verified": zod.boolean()
+})
+}))
+})
+
+
+/**
+ * @summary Join a public community
+ */
+export const JoinCommunityParams = zod.object({
+  "communityId": zod.coerce.number().int()
+})
+
+export const JoinCommunityResponse = zod.void()
+
+
+/**
+ * @summary Leave a community
+ */
+export const LeaveCommunityParams = zod.object({
+  "communityId": zod.coerce.number().int()
+})
+
+export const LeaveCommunityResponse = zod.void()
+
+
+/**
+ * @summary Get the current user's discovery and privacy preferences
+ */
+export const getMyPreferencesResponsePreferredRadiusKmMax = 500;
+
+
+
+export const GetMyPreferencesResponse = zod.object({
+  "interests": zod.array(zod.string()),
+  "homeCity": zod.string().nullable(),
+  "preferredRadiusKm": zod.number().int().min(1).max(getMyPreferencesResponsePreferredRadiusKmMax),
+  "showAttendanceBadges": zod.boolean(),
+  "profileVisibility": zod.enum(['private', 'community', 'public'])
+})
+
+
+/**
+ * @summary Save interests, home city, and privacy preferences
+ */
+export const updateMyPreferencesBodyInterestsItemMax = 60;
+
+export const updateMyPreferencesBodyInterestsMax = 15;
+
+export const updateMyPreferencesBodyHomeCityMax = 100;
+
+export const updateMyPreferencesBodyPreferredRadiusKmMax = 500;
+
+
+
+export const UpdateMyPreferencesBody = zod.object({
+  "interests": zod.array(zod.string().min(1).max(updateMyPreferencesBodyInterestsItemMax)).max(updateMyPreferencesBodyInterestsMax),
+  "homeCity": zod.string().max(updateMyPreferencesBodyHomeCityMax).nullable(),
+  "preferredRadiusKm": zod.number().int().min(1).max(updateMyPreferencesBodyPreferredRadiusKmMax),
+  "showAttendanceBadges": zod.boolean(),
+  "profileVisibility": zod.enum(['private', 'community', 'public'])
+})
+
+export const updateMyPreferencesResponsePreferredRadiusKmMax = 500;
+
+
+
+export const UpdateMyPreferencesResponse = zod.object({
+  "interests": zod.array(zod.string()),
+  "homeCity": zod.string().nullable(),
+  "preferredRadiusKm": zod.number().int().min(1).max(updateMyPreferencesResponsePreferredRadiusKmMax),
+  "showAttendanceBadges": zod.boolean(),
+  "profileVisibility": zod.enum(['private', 'community', 'public'])
+})
+
+
+/**
+ * @summary Recommend upcoming events using saved interests and follows
+ */
+export const getMyRecommendationsResponseLatitudeMin = -90;
+export const getMyRecommendationsResponseLatitudeMax = 90;
+
+export const getMyRecommendationsResponseLongitudeMin = -180;
+export const getMyRecommendationsResponseLongitudeMax = 180;
+
+
+
+export const GetMyRecommendationsResponseItem = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "slug": zod.string(),
+  "description": zod.string(),
+  "category": zod.string(),
+  "tags": zod.array(zod.string()),
+  "bannerUrl": zod.string(),
+  "startAt": zod.coerce.date(),
+  "endAt": zod.coerce.date(),
+  "timezone": zod.string(),
+  "venue": zod.string(),
+  "city": zod.string(),
+  "latitude": zod.number().min(getMyRecommendationsResponseLatitudeMin).max(getMyRecommendationsResponseLatitudeMax).nullable(),
+  "longitude": zod.number().min(getMyRecommendationsResponseLongitudeMin).max(getMyRecommendationsResponseLongitudeMax).nullable(),
+  "mode": zod.enum(['in-person', 'hybrid', 'online']),
+  "price": zod.number(),
+  "currency": zod.string(),
+  "capacity": zod.number().int().nullable(),
+  "registrationDeadline": zod.coerce.date().nullable(),
+  "externalUrl": zod.string().nullable(),
+  "status": zod.enum(['draft', 'published', 'cancelled', 'completed']),
+  "isDemo": zod.boolean(),
+  "attendeeCount": zod.number().int(),
+  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal('cancelled'),zod.literal(null)]).nullable(),
+  "rsvpRegistrationCode": zod.string().nullable(),
+  "rsvpCheckedInAt": zod.coerce.date().nullable(),
+  "organizerFollowing": zod.boolean(),
+  "distanceKm": zod.number().nullable(),
+  "isSaved": zod.boolean(),
+  "organizer": zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "verified": zod.boolean()
+})
+})
+export const GetMyRecommendationsResponse = zod.array(GetMyRecommendationsResponseItem)
+
+
+/**
+ * @summary Get in-app notifications for the current user
+ */
+export const GetMyNotificationsResponseItem = zod.object({
+  "id": zod.number().int(),
+  "eventId": zod.number().int().nullable(),
+  "kind": zod.string(),
+  "title": zod.string(),
+  "body": zod.string(),
+  "readAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date()
+})
+export const GetMyNotificationsResponse = zod.array(GetMyNotificationsResponseItem)
+
+
+/**
+ * @summary Mark one notification as read
+ */
+export const MarkNotificationReadParams = zod.object({
+  "notificationId": zod.coerce.number().int()
+})
+
+export const MarkNotificationReadResponse = zod.void()
+
+
+/**
+ * @summary Get attendance badges earned through verified check-in
+ */
+export const GetMyAttendanceBadgesResponseItem = zod.object({
+  "eventId": zod.number().int(),
+  "eventTitle": zod.string(),
+  "issuedAt": zod.coerce.date()
+})
+export const GetMyAttendanceBadgesResponse = zod.array(GetMyAttendanceBadgesResponseItem)
+
+
+/**
+ * @summary Get moderation queue counts
+ */
+export const GetAdminDashboardResponse = zod.object({
+  "openReports": zod.number().int(),
+  "pendingVerifications": zod.number().int(),
+  "suspendedUsers": zod.number().int()
+})
+
+
+/**
+ * @summary List event reports for moderation
+ */
+export const ListAdminReportsResponseItem = zod.object({
+  "id": zod.number().int(),
+  "eventId": zod.number().int(),
+  "eventTitle": zod.string(),
+  "reporterId": zod.string(),
+  "reason": zod.string(),
+  "details": zod.string(),
+  "status": zod.enum(['open', 'actioned', 'dismissed']),
+  "reviewedBy": zod.string().nullable(),
+  "createdAt": zod.coerce.date()
+})
+export const ListAdminReportsResponse = zod.array(ListAdminReportsResponseItem)
+
+
+/**
+ * @summary Resolve or dismiss an event report
+ */
+export const ResolveAdminReportParams = zod.object({
+  "reportId": zod.coerce.number().int()
+})
+
+export const ResolveAdminReportBody = zod.object({
+  "status": zod.enum(['actioned', 'dismissed']),
+  "cancelEvent": zod.boolean()
+})
+
+export const ResolveAdminReportResponse = zod.object({
+  "id": zod.number().int(),
+  "eventId": zod.number().int(),
+  "eventTitle": zod.string(),
+  "reporterId": zod.string(),
+  "reason": zod.string(),
+  "details": zod.string(),
+  "status": zod.enum(['open', 'actioned', 'dismissed']),
+  "reviewedBy": zod.string().nullable(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Approve or reject organizer verification
+ */
+export const ReviewOrganizerVerificationParams = zod.object({
+  "organizerId": zod.coerce.number().int()
+})
+
+export const ReviewOrganizerVerificationBody = zod.object({
+  "status": zod.enum(['approved', 'rejected'])
+})
+
+export const ReviewOrganizerVerificationResponse = zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "type": zod.string(),
+  "description": zod.string(),
+  "verified": zod.boolean(),
+  "verificationStatus": zod.enum(['not_requested', 'pending', 'approved', 'rejected'])
+})
+
+
+/**
+ * @summary Suspend a user account
+ */
+export const SuspendAdminUserParams = zod.object({
+  "userId": zod.coerce.string()
+})
+
+export const suspendAdminUserBodyReasonMin = 5;
+export const suspendAdminUserBodyReasonMax = 500;
+
+
+
+export const SuspendAdminUserBody = zod.object({
+  "reason": zod.string().min(suspendAdminUserBodyReasonMin).max(suspendAdminUserBodyReasonMax)
+})
+
+export const SuspendAdminUserResponse = zod.void()
+
+
+/**
+ * @summary Restore a suspended user account
+ */
+export const UnsuspendAdminUserParams = zod.object({
+  "userId": zod.coerce.string()
+})
+
+export const UnsuspendAdminUserResponse = zod.void()
+
+
+/**
+ * @summary Assign or remove a moderator role
+ */
+export const AssignAdminRoleParams = zod.object({
+  "userId": zod.coerce.string()
+})
+
+export const AssignAdminRoleBody = zod.object({
+  "role": zod.enum(['moderator']),
+  "enabled": zod.boolean()
+})
+
+export const AssignAdminRoleResponse = zod.void()
 
 

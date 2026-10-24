@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { OrganizerVerificationStatus } from './organizerVerificationStatus';
 
 export interface Organizer {
   id: number;
@@ -12,4 +13,5 @@ export interface Organizer {
   type: string;
   description: string;
   verified: boolean;
+  verificationStatus: OrganizerVerificationStatus;
 }

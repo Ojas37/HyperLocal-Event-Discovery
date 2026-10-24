@@ -21,4 +21,21 @@ sort?: ListEventsSort;
  * @maximum 50
  */
 limit?: number;
+dateFrom?: Date;
+dateTo?: Date;
+/**
+ * @minimum -90
+ * @maximum 90
+ */
+latitude?: number;
+/**
+ * @minimum -180
+ * @maximum 180
+ */
+longitude?: number;
+/**
+ * @minimum 1
+ * @maximum 500
+ */
+radiusKm?: number;
 };

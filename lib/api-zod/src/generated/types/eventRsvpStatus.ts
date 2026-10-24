@@ -15,4 +15,5 @@ export type EventRsvpStatus = typeof EventRsvpStatus[keyof typeof EventRsvpStatu
 export const EventRsvpStatus = {
   confirmed: 'confirmed',
   waitlisted: 'waitlisted',
+  cancelled: 'cancelled',
 } as const;
