@@ -1,0 +1,49 @@
+Continue development of the existing LocalLoop MVP. Do not rebuild the application from scratch, change its visual identity, or remove any working functionality.
+
+First inspect the existing codebase, database schema, authentication setup, routes, and current implementation. Identify which features below already exist and implement only what is missing or incomplete.
+
+### Phase 1: Attendee tickets and QR check-in
+- Generate a unique, unpredictable QR ticket for each confirmed RSVP.
+- Display the ticket in the attendee's My Events or event registration details.
+- Create an organizer check-in page listing registered attendees.
+- Support camera-based QR scanning and manual registration-code entry.
+- Validate tickets on the server and ensure only authorized organizers or assigned staff can check attendees in.
+- Prevent duplicate check-ins and show clear success/error states.
+- Display actual registered, checked-in, and attendance-rate statistics.
+- Handle cancelled RSVPs, waitlisted users, invalid tickets, and unauthorized requests correctly.
+
+### Phase 2: Organizer management and moderation
+- Add organizer event editing, cancellation, attendee management, and registration exports where appropriate.
+- Notify registered attendees when important event details change, using configured notification channels.
+- Add organizer verification requests with pending, approved, and rejected states.
+- Build a protected admin dashboard for reviewing reported events and verification requests.
+- Allow authorized administrators to moderate events and suspend abusive accounts.
+- Enforce every permission on the backend. Do not rely only on frontend route protection.
+
+### Phase 3: Hyperlocal discovery
+- Add an interactive map using Leaflet and OpenStreetMap.
+- Show markers only for events with valid coordinates.
+- Implement location permission, manual city/area selection, and radius filtering.
+- Add a list/map toggle and useful empty states.
+- Improve recommendations using saved interests, event categories, dates, location, and organizer follows.
+- Provide a useful fallback when geolocation is denied or coordinates are missing.
+
+### Phase 4: Community engagement
+- Implement organizer follow/unfollow functionality.
+- Add community listing and detail pages with descriptions, topics, organizers, and upcoming events.
+- Add event ratings and feedback where supported.
+- Award attendance badges only after verified check-in.
+- Ensure privacy settings are respected.
+
+### Phase 5: Testing and reliability
+- Test the entire attendee, organizer, and administrator journey.
+- Verify RSVP capacity, waitlist promotion, cancellation, QR validation, duplicate check-in prevention, and authorization.
+- Test signed-in and signed-out sessions using the existing authentication provider.
+- Verify that all database-backed actions persist after refresh.
+- Run typechecks, tests, database migrations where appropriate, and production builds.
+- Fix regressions without removing existing functionality.
+- Do not introduce fake data into real analytics or claim integrations work when they are unconfigured.
+
+Preserve the current PostgreSQL database, existing Clerk integration, responsive UI, and 16 clearly labeled development sample events.
+
+Before finishing, provide a concise report separating completed features, tested workflows, configuration requirements, and remaining limitations. Do not publish the application or change production credentials without my explicit approval.
