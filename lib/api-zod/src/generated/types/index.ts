@@ -48,6 +48,7 @@ export * from './organizerDashboard';
 export * from './organizerInput';
 export * from './organizerInputType';
 export * from './organizerSummary';
+export * from './organizerVerificationRequest';
 export * from './organizerVerificationStatus';
 export * from './reportEventInput';
 export * from './reportEventInputReason';

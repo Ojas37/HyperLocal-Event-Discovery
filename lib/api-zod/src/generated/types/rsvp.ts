@@ -11,7 +11,8 @@ export interface Rsvp {
   id: number;
   eventId: number;
   status: RsvpStatus;
-  registrationCode: string;
+  /** @nullable */
+  registrationCode: string | null;
   /** @nullable */
   checkedInAt: Date | null;
 }

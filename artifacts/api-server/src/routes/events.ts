@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { and, asc, count, desc, eq, gt, ilike, inArray, or, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, gte, ilike, inArray, lte, or, type SQL } from "drizzle-orm";
 import { Router, type IRouter } from "express";
 import { getAuth } from "@clerk/express";
 import {
@@ -21,6 +21,8 @@ import {
   db,
   eventsTable,
   organizersTable,
+  organizerFollowsTable,
+  notificationsTable,
   rsvpsTable,
   savedEventsTable,
 } from "@workspace/db";
@@ -59,7 +61,7 @@ export async function toEventDtos(rows: JoinedEvent[], userId?: string) {
   const ids = rows.map(({ event }) => event.id);
   if (ids.length === 0) return [];
 
-  const [countRows, rsvpRows, savedRows] = await Promise.all([
+  const [countRows, rsvpRows, savedRows, followingRows] = await Promise.all([
     db
       .select({ eventId: rsvpsTable.eventId, total: count() })
       .from(rsvpsTable)
@@ -67,7 +69,12 @@ export async function toEventDtos(rows: JoinedEvent[], userId?: string) {
       .groupBy(rsvpsTable.eventId),
     userId
       ? db
-          .select({ eventId: rsvpsTable.eventId, status: rsvpsTable.status })
+          .select({
+            eventId: rsvpsTable.eventId,
+            status: rsvpsTable.status,
+            registrationCode: rsvpsTable.registrationCode,
+            checkedInAt: rsvpsTable.checkedInAt,
+          })
           .from(rsvpsTable)
           .where(and(eq(rsvpsTable.userId, userId), inArray(rsvpsTable.eventId, ids)))
       : Promise.resolve([]),
@@ -77,11 +84,23 @@ export async function toEventDtos(rows: JoinedEvent[], userId?: string) {
           .from(savedEventsTable)
           .where(and(eq(savedEventsTable.userId, userId), inArray(savedEventsTable.eventId, ids)))
       : Promise.resolve([]),
+    userId
+      ? db
+          .select({ organizerId: organizerFollowsTable.organizerId })
+          .from(organizerFollowsTable)
+          .where(
+            and(
+              eq(organizerFollowsTable.userId, userId),
+              inArray(organizerFollowsTable.organizerId, rows.map(({ organizer }) => organizer.id)),
+            ),
+          )
+      : Promise.resolve([]),
   ]);
 
   const countsByEvent = new Map(countRows.map((row) => [row.eventId, row.total]));
-  const rsvpByEvent = new Map(rsvpRows.map((row) => [row.eventId, row.status]));
+  const rsvpByEvent = new Map(rsvpRows.map((row) => [row.eventId, row]));
   const savedIds = new Set(savedRows.map((row) => row.eventId));
+  const followingIds = new Set(followingRows.map((row) => row.organizerId));
 
   return rows.map(({ event, organizer }) => ({
     id: event.id,
@@ -96,6 +115,8 @@ export async function toEventDtos(rows: JoinedEvent[], userId?: string) {
     timezone: event.timezone,
     venue: event.venue,
     city: event.city,
+    latitude: event.latitude,
+    longitude: event.longitude,
     mode: event.mode,
     price: event.price,
     currency: event.currency,
@@ -105,10 +126,29 @@ export async function toEventDtos(rows: JoinedEvent[], userId?: string) {
     status: event.status,
     isDemo: event.isDemo,
     attendeeCount: countsByEvent.get(event.id) ?? 0,
-    rsvpStatus: rsvpByEvent.get(event.id) ?? null,
+    rsvpStatus: rsvpByEvent.get(event.id)?.status ?? null,
+    rsvpRegistrationCode:
+      event.status === "published" && rsvpByEvent.get(event.id)?.status === "confirmed"
+        ? rsvpByEvent.get(event.id)?.registrationCode ?? null
+        : null,
+    rsvpCheckedInAt: rsvpByEvent.get(event.id)?.checkedInAt ?? null,
+    organizerFollowing: followingIds.has(organizer.id),
+    distanceKm: null as number | null,
     isSaved: savedIds.has(event.id),
     organizer,
   }));
+}
+
+function distanceKm(aLat: number, aLng: number, bLat: number, bLng: number) {
+  const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+  const deltaLat = toRadians(bLat - aLat);
+  const deltaLng = toRadians(bLng - aLng);
+  const value =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(toRadians(aLat)) *
+      Math.cos(toRadians(bLat)) *
+      Math.sin(deltaLng / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
 }
 
 function getUserId(req: Parameters<typeof getAuth>[0]): string | undefined {
@@ -126,7 +166,14 @@ router.get("/events", async (req, res): Promise<void> => {
     return;
   }
 
-  const { q, category, city, mode, price, sort, limit } = parsed.data;
+  const { q, category, city, mode, price, sort, limit, dateFrom, dateTo, latitude, longitude, radiusKm } =
+    parsed.data;
+  const hasLatitude = latitude !== undefined;
+  const hasLongitude = longitude !== undefined;
+  if (hasLatitude !== hasLongitude || (radiusKm !== undefined && !hasLatitude)) {
+    res.status(400).json({ error: "Provide both coordinates to use a radius filter." });
+    return;
+  }
   const filters: SQL<unknown>[] = [
     eq(eventsTable.status, "published"),
     gt(eventsTable.endAt, new Date()),
@@ -136,6 +183,8 @@ router.get("/events", async (req, res): Promise<void> => {
   if (mode) filters.push(eq(eventsTable.mode, mode));
   if (price === "free") filters.push(eq(eventsTable.price, 0));
   if (price === "paid") filters.push(gt(eventsTable.price, 0));
+  if (dateFrom) filters.push(gte(eventsTable.startAt, dateFrom));
+  if (dateTo) filters.push(lte(eventsTable.startAt, dateTo));
   if (q?.trim()) {
     const term = `%${q.trim().slice(0, 120)}%`;
     filters.push(
@@ -151,9 +200,27 @@ router.get("/events", async (req, res): Promise<void> => {
   }
 
   const rows = await listJoinedEvents(and(...filters)!, sort === "newest" ? "newest" : "soonest");
-  let events = await toEventDtos(rows.slice(0, limit), getUserId(req));
+  let events = await toEventDtos(rows, getUserId(req));
+  if (hasLatitude && hasLongitude) {
+    events = events
+      .filter(
+        (event) =>
+          event.latitude !== null &&
+          event.longitude !== null &&
+          event.latitude >= -90 &&
+          event.latitude <= 90 &&
+          event.longitude >= -180 &&
+          event.longitude <= 180,
+      )
+      .map((event) => ({
+        ...event,
+        distanceKm: distanceKm(latitude!, longitude!, event.latitude!, event.longitude!),
+      }));
+    if (radiusKm !== undefined) events = events.filter((event) => (event.distanceKm ?? Infinity) <= radiusKm);
+    events.sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity));
+  }
   if (sort === "popular") events = events.sort((a, b) => b.attendeeCount - a.attendeeCount);
-  res.json(ListEventsResponse.parse(events));
+  res.json(ListEventsResponse.parse(events.slice(0, limit)));
 });
 
 router.get("/events/featured", async (req, res): Promise<void> => {
@@ -171,7 +238,7 @@ router.get("/events/:eventId", async (req, res): Promise<void> => {
     return;
   }
   const [row] = await listJoinedEvents(
-    and(eq(eventsTable.id, params.data.eventId), eq(eventsTable.status, "published"))!,
+    and(eq(eventsTable.id, params.data.eventId), inArray(eventsTable.status, ["published", "cancelled"]))!,
   );
   if (!row) {
     res.status(404).json({ error: "Event not found" });
@@ -199,7 +266,12 @@ router.post("/events/:eventId/rsvp", async (req, res): Promise<void> => {
       .from(eventsTable)
       .where(eq(eventsTable.id, params.data.eventId))
       .for("update");
-    if (!event || event.status !== "published" || event.endAt <= new Date()) {
+    if (
+      !event ||
+      event.status !== "published" ||
+      event.endAt <= new Date() ||
+      (event.registrationDeadline && event.registrationDeadline <= new Date())
+    ) {
       return { kind: "unavailable" as const };
     }
 
@@ -207,22 +279,36 @@ router.post("/events/:eventId/rsvp", async (req, res): Promise<void> => {
       .select()
       .from(rsvpsTable)
       .where(and(eq(rsvpsTable.eventId, event.id), eq(rsvpsTable.userId, userId)));
-    if (existing) return { kind: "duplicate" as const };
+    if (existing && existing.status !== "cancelled") return { kind: "duplicate" as const };
 
     const [attendeeCount] = await tx
       .select({ total: count() })
       .from(rsvpsTable)
       .where(and(eq(rsvpsTable.eventId, event.id), eq(rsvpsTable.status, "confirmed")));
     const full = event.capacity !== null && attendeeCount.total >= event.capacity;
-    const [rsvp] = await tx
-      .insert(rsvpsTable)
-      .values({
-        eventId: event.id,
-        userId,
-        status: full ? "waitlisted" : "confirmed",
-        registrationCode: randomBytes(24).toString("base64url"),
-      })
-      .returning();
+    const nextStatus = full ? "waitlisted" : "confirmed";
+    const registrationCode = randomBytes(24).toString("base64url");
+    const [rsvp] = existing
+      ? await tx
+          .update(rsvpsTable)
+          .set({
+            status: nextStatus,
+            registrationCode,
+            checkedInAt: null,
+            cancelledAt: null,
+            createdAt: new Date(),
+          })
+          .where(eq(rsvpsTable.id, existing.id))
+          .returning()
+      : await tx
+          .insert(rsvpsTable)
+          .values({
+            eventId: event.id,
+            userId,
+            status: nextStatus,
+            registrationCode,
+          })
+          .returning();
     return { kind: "created" as const, rsvp };
   });
 
@@ -239,7 +325,7 @@ router.post("/events/:eventId/rsvp", async (req, res): Promise<void> => {
       id: result.rsvp.id,
       eventId: result.rsvp.eventId,
       status: result.rsvp.status,
-      registrationCode: result.rsvp.registrationCode,
+      registrationCode: result.rsvp.status === "confirmed" ? result.rsvp.registrationCode : null,
     }),
   );
 });
@@ -269,8 +355,12 @@ router.delete("/events/:eventId/rsvp", async (req, res): Promise<void> => {
       .from(rsvpsTable)
       .where(and(eq(rsvpsTable.eventId, event.id), eq(rsvpsTable.userId, userId)));
     if (!rsvp) return { kind: "missing-rsvp" as const };
+    if (rsvp.checkedInAt) return { kind: "checked-in" as const };
 
-    await tx.delete(rsvpsTable).where(eq(rsvpsTable.id, rsvp.id));
+    await tx
+      .update(rsvpsTable)
+      .set({ status: "cancelled", cancelledAt: new Date() })
+      .where(eq(rsvpsTable.id, rsvp.id));
     if (rsvp.status === "confirmed") {
       const [next] = await tx
         .select()
@@ -284,6 +374,13 @@ router.delete("/events/:eventId/rsvp", async (req, res): Promise<void> => {
           .update(rsvpsTable)
           .set({ status: "confirmed" })
           .where(eq(rsvpsTable.id, next.id));
+        await tx.insert(notificationsTable).values({
+          userId: next.userId,
+          eventId: event.id,
+          kind: "waitlist_promotion",
+          title: "A spot opened up",
+          body: `Your RSVP for ${event.title} is now confirmed.`,
+        });
       }
     }
     return { kind: "cancelled" as const };
@@ -295,6 +392,10 @@ router.delete("/events/:eventId/rsvp", async (req, res): Promise<void> => {
   }
   if (result.kind === "missing-rsvp") {
     res.status(404).json({ error: "No registration found for this event." });
+    return;
+  }
+  if (result.kind === "checked-in") {
+    res.status(409).json({ error: "An attendee who has checked in cannot cancel their registration." });
     return;
   }
   res.status(204).send();
@@ -355,9 +456,14 @@ router.get("/me/events", async (req, res): Promise<void> => {
     db.select().from(rsvpsTable).where(eq(rsvpsTable.userId, userId)),
     db.select().from(savedEventsTable).where(eq(savedEventsTable.userId, userId)),
   ]);
-  const registeredIds = registrations.map((rsvp) => rsvp.eventId);
+  const registeredIds = registrations
+    .filter((rsvp) => rsvp.status === "confirmed" || rsvp.status === "waitlisted")
+    .map((rsvp) => rsvp.eventId);
+  const cancelledIds = registrations
+    .filter((rsvp) => rsvp.status === "cancelled")
+    .map((rsvp) => rsvp.eventId);
   const savedIds = saved.map((item) => item.eventId);
-  const ids = [...new Set([...registeredIds, ...savedIds])];
+  const ids = [...new Set([...registeredIds, ...cancelledIds, ...savedIds])];
   const rows =
     ids.length === 0
       ? []
@@ -367,10 +473,13 @@ router.get("/me/events", async (req, res): Promise<void> => {
   const registered = registeredIds
     .map((id) => eventById.get(id))
     .filter((event): event is NonNullable<typeof event> => Boolean(event));
+  const cancelled = cancelledIds
+    .map((id) => eventById.get(id))
+    .filter((event): event is NonNullable<typeof event> => Boolean(event));
   const savedEvents = savedIds
     .map((id) => eventById.get(id))
     .filter((event): event is NonNullable<typeof event> => Boolean(event));
-  res.json(GetMyEventsResponse.parse({ registered, saved: savedEvents }));
+  res.json(GetMyEventsResponse.parse({ registered, cancelled, saved: savedEvents }));
 });
 
 export default router;

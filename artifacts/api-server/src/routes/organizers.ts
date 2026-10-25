@@ -33,6 +33,7 @@ function organizerDto(organizer: typeof organizersTable.$inferSelect) {
     type: organizer.type,
     description: organizer.description,
     verified: organizer.verified,
+    verificationStatus: organizer.verificationStatus,
   };
 }
 
@@ -142,6 +143,10 @@ router.post("/organizer/events", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Add a venue and city before saving this event." });
     return;
   }
+  if ((input.latitude === null) !== (input.longitude === null)) {
+    res.status(400).json({ error: "Latitude and longitude must both be set or both be blank." });
+    return;
+  }
 
   const slugBase = input.title
     .toLowerCase()
@@ -165,6 +170,8 @@ router.post("/organizer/events", async (req, res): Promise<void> => {
       timezone: input.timezone,
       venue: input.venue.trim(),
       city: input.city.trim(),
+      latitude: input.latitude,
+      longitude: input.longitude,
       mode: input.mode,
       price: input.price,
       currency: input.currency.toUpperCase(),

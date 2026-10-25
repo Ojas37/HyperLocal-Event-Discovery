@@ -209,7 +209,7 @@ export const CreateRsvpResponse = zod.object({
   "id": zod.number().int(),
   "eventId": zod.number().int(),
   "status": zod.enum(['confirmed', 'waitlisted', 'cancelled']),
-  "registrationCode": zod.string(),
+  "registrationCode": zod.string().nullable(),
   "checkedInAt": zod.coerce.date().nullable()
 })
 
@@ -601,6 +601,59 @@ export const PublishOrganizerEventResponse = zod.object({
   "city": zod.string(),
   "latitude": zod.number().min(publishOrganizerEventResponseLatitudeMin).max(publishOrganizerEventResponseLatitudeMax).nullable(),
   "longitude": zod.number().min(publishOrganizerEventResponseLongitudeMin).max(publishOrganizerEventResponseLongitudeMax).nullable(),
+  "mode": zod.enum(['in-person', 'hybrid', 'online']),
+  "price": zod.number(),
+  "currency": zod.string(),
+  "capacity": zod.number().int().nullable(),
+  "registrationDeadline": zod.coerce.date().nullable(),
+  "externalUrl": zod.string().nullable(),
+  "status": zod.enum(['draft', 'published', 'cancelled', 'completed']),
+  "isDemo": zod.boolean(),
+  "attendeeCount": zod.number().int(),
+  "rsvpStatus": zod.union([zod.literal('confirmed'),zod.literal('waitlisted'),zod.literal('cancelled'),zod.literal(null)]).nullable(),
+  "rsvpRegistrationCode": zod.string().nullable(),
+  "rsvpCheckedInAt": zod.coerce.date().nullable(),
+  "organizerFollowing": zod.boolean(),
+  "distanceKm": zod.number().nullable(),
+  "isSaved": zod.boolean(),
+  "organizer": zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "verified": zod.boolean()
+})
+})
+
+
+/**
+ * @summary Get an event draft or published event for its owner
+ */
+export const GetOrganizerEventParams = zod.object({
+  "eventId": zod.coerce.number().int()
+})
+
+export const getOrganizerEventResponseLatitudeMin = -90;
+export const getOrganizerEventResponseLatitudeMax = 90;
+
+export const getOrganizerEventResponseLongitudeMin = -180;
+export const getOrganizerEventResponseLongitudeMax = 180;
+
+
+
+export const GetOrganizerEventResponse = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "slug": zod.string(),
+  "description": zod.string(),
+  "category": zod.string(),
+  "tags": zod.array(zod.string()),
+  "bannerUrl": zod.string(),
+  "startAt": zod.coerce.date(),
+  "endAt": zod.coerce.date(),
+  "timezone": zod.string(),
+  "venue": zod.string(),
+  "city": zod.string(),
+  "latitude": zod.number().min(getOrganizerEventResponseLatitudeMin).max(getOrganizerEventResponseLatitudeMax).nullable(),
+  "longitude": zod.number().min(getOrganizerEventResponseLongitudeMin).max(getOrganizerEventResponseLongitudeMax).nullable(),
   "mode": zod.enum(['in-person', 'hybrid', 'online']),
   "price": zod.number(),
   "currency": zod.string(),
@@ -1306,6 +1359,19 @@ export const ListAdminReportsResponseItem = zod.object({
   "createdAt": zod.coerce.date()
 })
 export const ListAdminReportsResponse = zod.array(ListAdminReportsResponseItem)
+
+
+/**
+ * @summary List pending organizer verification requests
+ */
+export const ListAdminVerificationsResponseItem = zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "type": zod.string(),
+  "description": zod.string(),
+  "requestedAt": zod.coerce.date().nullable()
+})
+export const ListAdminVerificationsResponse = zod.array(ListAdminVerificationsResponseItem)
 
 
 /**

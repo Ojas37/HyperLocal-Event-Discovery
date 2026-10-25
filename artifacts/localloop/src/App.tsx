@@ -15,13 +15,27 @@ import {
   useGetMyEvents, getGetMyEventsQueryKey, useGetMyOrganizer,
   getGetMyOrganizerQueryKey, useCreateOrganizer, useGetOrganizerDashboard,
   getGetOrganizerDashboardQueryKey, useCreateOrganizerEvent,
-  usePublishOrganizerEvent, type Event, type EventInput, type OrganizerInput,
+  usePublishOrganizerEvent, useGetMyRecommendations, getGetMyRecommendationsQueryKey,
+  useRequestOrganizerVerification, type Event, type EventInput, type OrganizerInput,
 } from '@workspace/api-client-react';
 import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation, useParams } from 'wouter';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
+import {
+  ActivityPanel,
+  AdminPage,
+  CheckInPage,
+  CommunitiesPage,
+  CommunityDetailPage,
+  EditEventPage,
+  EventEngagement,
+  EventMap,
+  OrganizerEventActions,
+  PreferencesPage,
+  TicketPanel,
+} from '@/features/extended-pages';
 
 const queryClient = new QueryClient();
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -102,6 +116,7 @@ function Header() {
       <Link href="/" className="brand" data-testid="link-home"><span className="brand-mark">L</span><span>LocalLoop</span></Link>
       <nav className="nav-links" aria-label="Main navigation">
         <Link href="/discover" className={location === '/discover' ? 'active' : ''} data-testid="link-discover">Discover</Link>
+        <Link href="/communities" className={location.startsWith('/communities') ? 'active' : ''} data-testid="link-communities">Communities</Link>
         <Link href="/my-events" className={location === '/my-events' ? 'active' : ''} data-testid="link-my-events">My events</Link>
         <Link href="/organizer" className={location.startsWith('/organizer') ? 'active' : ''} data-testid="link-organizer">For organizers</Link>
       </nav>
@@ -110,12 +125,15 @@ function Header() {
       </button>
       {mobileOpen && <nav id="mobile-navigation" className="mobile-menu-panel" aria-label="Mobile navigation">
         <Link href="/discover" onClick={() => setMobileOpen(false)} data-testid="mobile-link-discover">Discover events</Link>
+        <Link href="/communities" onClick={() => setMobileOpen(false)} data-testid="mobile-link-communities">Communities</Link>
         <Link href="/my-events" onClick={() => setMobileOpen(false)} data-testid="mobile-link-my-events">My events</Link>
         <Link href="/organizer" onClick={() => setMobileOpen(false)} data-testid="mobile-link-organizer">For organizers</Link>
+        {isSignedIn && <Link href="/settings" onClick={() => setMobileOpen(false)} data-testid="mobile-link-settings">Settings</Link>}
+        {isSignedIn && <Link href="/admin" onClick={() => setMobileOpen(false)} data-testid="mobile-link-admin">Moderation</Link>}
         {!isSignedIn && <Link href={`/sign-in?redirect_url=${encodeURIComponent(location)}`} onClick={() => setMobileOpen(false)} data-testid="mobile-link-sign-in">Sign in</Link>}
       </nav>}
       <div className="top-actions">
-        {isSignedIn ? <Link href="/organizer" className="btn btn-quiet btn-sm" data-testid="link-account">Your space <ChevronRight size={14} /></Link> :
+        {isSignedIn ? <><Link href="/settings" className="btn btn-quiet btn-sm" data-testid="link-settings">Settings</Link><Link href="/organizer" className="btn btn-quiet btn-sm" data-testid="link-account">Your space <ChevronRight size={14} /></Link></> :
           <Link href={`/sign-in?redirect_url=${encodeURIComponent(location)}`} className="btn btn-outline btn-sm" data-testid="link-sign-in">Sign in</Link>}
         <Link href="/organizer" className="btn btn-primary btn-sm desktop-organize" data-testid="button-organize">Host an event <ArrowRight size={14} /></Link>
       </div>
@@ -218,16 +236,44 @@ function Discover() {
   const [city, setCity] = useState(() => new URLSearchParams(window.location.search).get('city') ?? '');
   const [mode, setMode] = useState('');
   const [price, setPrice] = useState('');
+  const [radiusKm, setRadiusKm] = useState(25);
+  const [latitude, setLatitude] = useState<number | undefined>();
+  const [longitude, setLongitude] = useState<number | undefined>();
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [view, setView] = useState<'list' | 'map'>('list');
+  const [locationMessage, setLocationMessage] = useState('');
+  const { isLoaded, isSignedIn } = useAuth();
   const params = useMemo(() => ({
     ...(q.trim() ? { q: q.trim() } : {}),
     ...(category ? { category } : {}),
     ...(city ? { city } : {}),
     ...(mode ? { mode: mode as 'in-person' | 'hybrid' | 'online' } : {}),
     ...(price ? { price: price as 'free' | 'paid' } : {}),
+    ...(dateFrom ? { dateFrom: new Date(`${dateFrom}T00:00:00`).toISOString() } : {}),
+    ...(dateTo ? { dateTo: new Date(`${dateTo}T23:59:59.999`).toISOString() } : {}),
+    ...(latitude !== undefined && longitude !== undefined ? { latitude, longitude, radiusKm } : {}),
     sort: 'soonest' as const,
     limit: 24,
-  }), [q, category, city, mode, price]);
+  }), [q, category, city, mode, price, dateFrom, dateTo, latitude, longitude, radiusKm]);
   const result = useListEvents(params, { query: { queryKey: getListEventsQueryKey(params) } });
+  const recommendations = useGetMyRecommendations({ query: { queryKey: getGetMyRecommendationsQueryKey(), enabled: Boolean(isLoaded && isSignedIn) } });
+  const findNearMe = () => {
+    setLocationMessage('');
+    if (!navigator.geolocation) {
+      setLocationMessage('Location is not available in this browser. Search by city instead.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(position.coords.latitude);
+        setLongitude(position.coords.longitude);
+        setLocationMessage(`Showing events within ${radiusKm} km of your location.`);
+      },
+      () => setLocationMessage('Location permission was not granted. Search by city or area instead.'),
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
+    );
+  };
   return <PageFrame><main className="page-shell">
     <div className="page-title"><div className="eyebrow" style={{ color: '#7772da' }}>Make a plan</div><h1>Discover what’s happening</h1><p>One good event can change the shape of your week.</p></div>
     <div className="filterbar">
@@ -235,10 +281,17 @@ function Discover() {
       <select className="select" aria-label="Filter by format" value={mode} onChange={(e) => setMode(e.target.value)} data-testid="select-event-mode"><option value="">All formats</option><option value="in-person">In person</option><option value="hybrid">Hybrid</option><option value="online">Online</option></select>
       <select className="select" aria-label="Filter by price" value={price} onChange={(e) => setPrice(e.target.value)} data-testid="select-event-price"><option value="">Any price</option><option value="free">Free</option><option value="paid">Paid</option></select>
       <input className="field" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category" aria-label="Filter by category" data-testid="input-event-category" />
-      <select className="select" aria-label="Filter by city" value={city} onChange={(e) => setCity(e.target.value)} data-testid="select-event-city"><option value="">Any city</option><option value="Mumbai">Mumbai</option><option value="Pune">Pune</option><option value="Bengaluru">Bengaluru</option><option value="Delhi">Delhi</option><option value="Hyderabad">Hyderabad</option><option value="Chennai">Chennai</option></select>
+      <input className="field" aria-label="Filter by city or area" value={city} onChange={(e) => setCity(e.target.value)} placeholder="City or area" data-testid="input-event-city-filter" />
+      <div className="nearby-tools"><select className="select" aria-label="Nearby search radius" value={radiusKm} onChange={(e) => setRadiusKm(Number(e.target.value))} data-testid="select-nearby-radius"><option value={5}>5 km</option><option value={10}>10 km</option><option value={25}>25 km</option><option value={50}>50 km</option><option value={100}>100 km</option></select><button className="btn btn-outline btn-sm" type="button" onClick={findNearMe} data-testid="button-find-nearby">Use my location</button></div>
+      <input className="field" type="date" aria-label="Events from date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} data-testid="input-date-from" />
+      <input className="field" type="date" aria-label="Events through date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} data-testid="input-date-to" />
     </div>
+    {locationMessage && <p className="inline-status" role="status" data-testid="status-location-filter">{locationMessage}</p>}
+    {latitude !== undefined && longitude !== undefined && <p className="muted-copy">Nearby results only include listings with valid coordinates. You can still search by city or area for the rest.</p>}
+    {isSignedIn && recommendations.data?.length ? <><div className="section-head" style={{ marginTop: 22 }}><div><h2>Picked for you</h2><p>Based on your interests, saved events and followed organizers.</p></div></div><EventList events={recommendations.data} isLoading={recommendations.isLoading} isError={recommendations.isError} retry={() => void recommendations.refetch()} /></> : null}
     <div className="section-head" style={{ marginTop: 22 }}><div><h2>Open invitations</h2><p>Browse by what you’re curious about.</p></div><span style={{ color: '#737b8b', fontSize: 12 }}>{result.data?.length ?? '—'} events</span></div>
-    <EventList events={result.data} isLoading={result.isLoading} isError={result.isError} retry={() => void result.refetch()} />
+    <div className="view-toggle" role="group" aria-label="Event result layout"><button className={view === 'list' ? 'selected' : ''} type="button" onClick={() => setView('list')} data-testid="button-list-view">List</button><button className={view === 'map' ? 'selected' : ''} type="button" onClick={() => setView('map')} data-testid="button-map-view">Map</button></div>
+    {view === 'map' && !result.isLoading && !result.isError ? <EventMap events={result.data ?? []} /> : <EventList events={result.data} isLoading={result.isLoading} isError={result.isError} retry={() => void result.refetch()} />}
   </main></PageFrame>;
 }
 function EventDetails() {
@@ -263,7 +316,8 @@ function EventDetails() {
   const rsvpAction = () => {
     if (!isSignedIn) return protectedAction();
     if (!event) return;
-    (event.rsvpStatus ? cancel : rsvp).mutate({ eventId: id }, { onSuccess: refresh });
+    if (event.status !== 'published') return;
+    (event.rsvpStatus === 'confirmed' || event.rsvpStatus === 'waitlisted' ? cancel : rsvp).mutate({ eventId: id }, { onSuccess: refresh });
   };
   const saveAction = () => {
     if (!isSignedIn) return protectedAction();
@@ -293,8 +347,8 @@ function EventDetails() {
         <div className="side-row"><Ticket /><span>{money(event)}{event.capacity ? ` · ${event.attendeeCount} of ${event.capacity} spots` : ''}</span></div>
         {event.registrationDeadline && <div className="side-row"><Clock3 /><span>Register by {eventDate(event.registrationDeadline)}</span></div>}
         {mutationError && <p role="alert" style={{ color: '#b42318', fontSize: 12 }}>That didn’t go through. Please try again.</p>}
-        <button className="btn btn-primary" style={{ width: '100%', marginTop: 9 }} disabled={pending} onClick={rsvpAction} data-testid="button-rsvp">
-          {pending ? 'Updating…' : event.rsvpStatus ? 'Cancel RSVP' : event.rsvpStatus === 'waitlisted' ? 'On waitlist' : 'RSVP for this event'}
+        <button className="btn btn-primary" style={{ width: '100%', marginTop: 9 }} disabled={pending || event.status !== 'published'} onClick={rsvpAction} data-testid="button-rsvp">
+          {pending ? 'Updating…' : event.status !== 'published' ? 'Registration closed' : event.rsvpStatus === 'confirmed' ? 'Cancel RSVP' : event.rsvpStatus === 'waitlisted' ? 'Cancel waitlist spot' : event.rsvpStatus === 'cancelled' ? 'Register again' : 'RSVP for this event'}
         </button>
         <button className="btn btn-outline" style={{ width: '100%', marginTop: 9 }} disabled={pending} onClick={saveAction} data-testid="button-save-detail">
           {event.isSaved ? <Check size={15} /> : <Bookmark size={15} />}{event.isSaved ? 'Saved' : 'Save for later'}
@@ -302,6 +356,8 @@ function EventDetails() {
         {event.externalUrl && <a href={event.externalUrl} target="_blank" rel="noreferrer" className="btn btn-quiet" style={{ width: '100%', marginTop: 9 }}>More event details <ArrowRight size={14} /></a>}
       </aside>
     </div>
+    <TicketPanel event={event} />
+    <EventEngagement event={event} />
   </main></PageFrame>;
 }
 function MyEvents() {
@@ -313,9 +369,12 @@ function MyEvents() {
     <div className="page-title"><div className="eyebrow" style={{ color: '#7772da' }}>Your LocalLoop</div><h1>My events</h1><p>Your saved ideas and the plans you’ve said yes to.</p></div>
     {!isLoaded || result.isLoading ? <LoadingGrid /> : result.isError ? <ErrorState retry={() => void result.refetch()} /> : <>
       <div className="section-head" style={{ marginTop: 6 }}><div><h2>Coming up</h2><p>Events you’re registered for.</p></div></div>
-      {result.data?.registered.length ? <div className="event-grid">{result.data.registered.map(event => <EventCard key={event.id} event={event} />)}</div> : <div className="state-box"><h3>No plans on the calendar yet</h3><p>Find something that feels like you and make it official.</p><Link href="/discover" className="btn btn-primary btn-sm" data-testid="link-discover-from-empty">Explore events <ArrowRight size={14} /></Link></div>}
+      {result.data?.registered.length ? <div className="registered-ticket-grid">{result.data.registered.map(event => <div className="registered-ticket-card" key={event.id}><EventCard event={event} /><TicketPanel event={event} /></div>)}</div> : <div className="state-box"><h3>No plans on the calendar yet</h3><p>Find something that feels like you and make it official.</p><Link href="/discover" className="btn btn-primary btn-sm" data-testid="link-discover-from-empty">Explore events <ArrowRight size={14} /></Link></div>}
+      {!!result.data?.cancelled.length && <><div className="section-head"><div><h2>Cancelled registrations</h2><p>These events or registrations are no longer active.</p></div></div><div className="event-grid">{result.data.cancelled.map(event => <EventCard key={event.id} event={event} />)}</div></>}
       <div className="section-head"><div><h2>Saved for later</h2><p>Good ideas worth keeping close.</p></div></div>
       {result.data?.saved.length ? <div className="event-grid">{result.data.saved.map(event => <EventCard key={event.id} event={event} />)}</div> : <div className="state-box"><h3>Your shortlist starts here</h3><p>Save an event to keep it handy for another day.</p><Link href="/discover" className="btn btn-outline btn-sm" data-testid="link-find-events">Find events <ArrowRight size={14} /></Link></div>}
+      <div className="section-head"><div><h2>Your LocalLoop updates</h2><p>In-app notices and attendance badges from events you attended.</p></div></div>
+      <ActivityPanel />
     </>}
   </main></PageFrame>;
 }
@@ -326,6 +385,7 @@ function Organizer() {
   const profile = useGetMyOrganizer({ query: { queryKey: getGetMyOrganizerQueryKey(), enabled: Boolean(isLoaded && isSignedIn) } });
   const dashboard = useGetOrganizerDashboard({ query: { queryKey: getGetOrganizerDashboardQueryKey(), enabled: Boolean(isLoaded && isSignedIn && profile.data) } });
   const createOrganizer = useCreateOrganizer();
+  const requestVerification = useRequestOrganizerVerification();
   const [profileError, setProfileError] = useState('');
   const submitProfile = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -354,8 +414,12 @@ function Organizer() {
       </form> :
       <>
         <div className="dash-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <div><h2 style={{ margin: 0, fontSize: 24, letterSpacing: '-.05em', color: '#202448' }}>{profile.data.name}</h2><p style={{ margin: '6px 0', color: '#737b8b', fontSize: 13 }}>{profile.data.description || 'Your organizer home, all in one place.'}</p></div>
-          <Link href="/organizer/create" className="btn btn-primary" data-testid="button-create-event"><span aria-hidden="true">+</span> Create event</Link>
+          <div><h2 style={{ margin: 0, fontSize: 24, letterSpacing: '-.05em', color: '#202448' }}>{profile.data.name}</h2><p style={{ margin: '6px 0', color: '#737b8b', fontSize: 13 }}>{profile.data.description || 'Your organizer home, all in one place.'}</p><p className="muted-copy" data-testid="status-organizer-verification">Verification: {profile.data.verificationStatus}</p></div>
+          <div className="organizer-actions">
+            <button type="button" className="btn btn-outline btn-sm" disabled={requestVerification.isPending || profile.data.verificationStatus === 'pending' || profile.data.verificationStatus === 'approved'} onClick={() => requestVerification.mutate(undefined, { onSuccess: () => { void client.invalidateQueries({ queryKey: getGetMyOrganizerQueryKey() }); }, onError: () => setProfileError('Verification request could not be sent.') })} data-testid="button-request-verification">{profile.data.verificationStatus === 'approved' ? 'Verified' : profile.data.verificationStatus === 'pending' ? 'Verification pending' : 'Request verification'}</button>
+            <Link href="/communities" className="btn btn-quiet btn-sm" data-testid="link-organizer-communities">Communities</Link>
+            <Link href="/organizer/create" className="btn btn-primary" data-testid="button-create-event"><span aria-hidden="true">+</span> Create event</Link>
+          </div>
         </div>
         {dashboard.isLoading ? <div className="dash-stats">{[0,1,2,3].map(n => <div className="skeleton" key={n} style={{ height: 90 }} />)}</div> :
           dashboard.isError ? <div style={{ marginTop: 25 }}><ErrorState retry={() => void dashboard.refetch()} /></div> : dashboard.data && <>
@@ -366,7 +430,7 @@ function Organizer() {
               <div className="stat-card"><span>On the waitlist</span><strong data-testid="text-waitlisted-rsvps">{dashboard.data.waitlistedRsvps}</strong></div>
             </div>
             <div className="section-head" style={{ marginTop: 36 }}><div><h2>Your events</h2><p>Keep an eye on what’s live and what’s next.</p></div></div>
-            {dashboard.data.events.length ? <div className="table-wrap"><table className="event-table"><thead><tr><th>Event</th><th>Date</th><th>Attendees</th><th>Status</th><th></th></tr></thead><tbody>{dashboard.data.events.map(event => <tr key={event.id} data-testid={`row-organizer-event-${event.id}`}><td>{event.status === 'published' ? <Link href={eventHref(event)} style={{ color: '#34394d', fontWeight: 700, textDecoration: 'none' }}>{event.title}</Link> : <strong>{event.title}</strong>}</td><td>{eventDate(event.startAt)}</td><td>{event.attendeeCount}</td><td><span className={`status-tag ${event.status === 'draft' ? 'status-draft' : ''}`}>{event.status}</span></td><td>{event.status === 'draft' && <PublishButton eventId={event.id} />}</td></tr>)}</tbody></table></div> :
+            {dashboard.data.events.length ? <div className="table-wrap"><table className="event-table"><thead><tr><th>Event</th><th>Date</th><th>Attendees</th><th>Status</th><th>Actions</th></tr></thead><tbody>{dashboard.data.events.map(event => <tr key={event.id} data-testid={`row-organizer-event-${event.id}`}><td>{event.status === 'published' ? <Link href={eventHref(event)} style={{ color: '#34394d', fontWeight: 700, textDecoration: 'none' }}>{event.title}</Link> : <strong>{event.title}</strong>}</td><td>{eventDate(event.startAt)}</td><td>{event.attendeeCount}</td><td><span className={`status-tag ${event.status === 'draft' ? 'status-draft' : ''}`}>{event.status}</span></td><td><div className="organizer-row-actions">{event.status === 'draft' && <PublishButton eventId={event.id} />}<OrganizerEventActions event={event} /></div></td></tr>)}</tbody></table></div> :
               <div className="state-box"><h3>Your first event starts here</h3><p>Share an idea, a skill, or a reason to get together.</p><Link href="/organizer/create" className="btn btn-primary btn-sm" data-testid="link-create-first-event">Create an event <ArrowRight size={14} /></Link></div>}
           </>}
       </>}
@@ -399,6 +463,8 @@ function CreateOrganizerEvent() {
       bannerUrl: value('bannerUrl'), startAt: new Date(value('startAt')).toISOString(),
       endAt: new Date(value('endAt')).toISOString(), timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
       venue: value('venue'), city: value('city'), mode: value('mode') as EventInput['mode'],
+      latitude: value('latitude') ? Number(value('latitude')) : null,
+      longitude: value('longitude') ? Number(value('longitude')) : null,
       price: Number(value('price') || 0), currency: value('currency').toUpperCase() || 'USD',
       capacity: value('capacity') ? Number(value('capacity')) : null,
       registrationDeadline: value('registrationDeadline') ? new Date(value('registrationDeadline')).toISOString() : null,
@@ -427,6 +493,8 @@ function CreateOrganizerEvent() {
         <div className="form-field"><label htmlFor="event-end">Ends</label><input className="field" type="datetime-local" id="event-end" name="endAt" required data-testid="input-event-end" /></div>
         <div className="form-field"><label htmlFor="event-venue">Venue</label><input className="field" id="event-venue" name="venue" required placeholder="Place or online room" data-testid="input-event-venue" /></div>
         <div className="form-field"><label htmlFor="event-city">City</label><input className="field" id="event-city" name="city" required placeholder="City" data-testid="input-event-city" /></div>
+        <div className="form-field"><label htmlFor="event-latitude">Latitude (optional)</label><input className="field" type="number" min="-90" max="90" step="any" id="event-latitude" name="latitude" data-testid="input-event-latitude" /></div>
+        <div className="form-field"><label htmlFor="event-longitude">Longitude (optional)</label><input className="field" type="number" min="-180" max="180" step="any" id="event-longitude" name="longitude" data-testid="input-event-longitude" /></div>
         <div className="form-field"><label htmlFor="event-mode">Format</label><select className="select" id="event-mode" name="mode" required data-testid="select-event-format"><option value="in-person">In person</option><option value="hybrid">Hybrid</option><option value="online">Online</option></select></div>
         <div className="form-field"><label htmlFor="event-capacity">Capacity (optional)</label><input className="field" type="number" min="1" id="event-capacity" name="capacity" placeholder="No limit" data-testid="input-event-capacity" /></div>
         <div className="form-field"><label htmlFor="event-price">Price</label><input className="field" type="number" min="0" step="0.01" id="event-price" name="price" defaultValue="0" required data-testid="input-event-price" /></div>
@@ -466,6 +534,12 @@ function ClerkRoutes() {
       <Route path="/discover" component={Discover} />
       <Route path="/events/:eventId" component={EventDetails} />
       <Route path="/my-events" component={MyEvents} />
+      <Route path="/communities" component={() => <PageFrame><CommunitiesPage /></PageFrame>} />
+      <Route path="/communities/:slug" component={() => <PageFrame><CommunityDetailPage /></PageFrame>} />
+      <Route path="/settings" component={() => <PageFrame><PreferencesPage /></PageFrame>} />
+      <Route path="/admin" component={() => <PageFrame><AdminPage /></PageFrame>} />
+      <Route path="/organizer/events/:eventId/check-in" component={() => <PageFrame><CheckInPage /></PageFrame>} />
+      <Route path="/organizer/events/:eventId/edit" component={() => <PageFrame><EditEventPage /></PageFrame>} />
       <Route path="/organizer/create" component={CreateOrganizerEvent} />
       <Route path="/organizer" component={Organizer} />
       <Route path="/sign-in/*?" component={SignInPage} />

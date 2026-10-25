@@ -79,6 +79,7 @@
     "@clerk/react": "^6.18.0",
     "@clerk/themes": "^2.4.57",
     "@zxing/browser": "^0.2.1",
+    "@zxing/library": "^0.23.0",
     "leaflet": "^1.9.4",
     "qrcode.react": "^4.2.0",
     "react-leaflet": "^5.0.0"

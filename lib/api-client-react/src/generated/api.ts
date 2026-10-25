@@ -51,6 +51,7 @@ import type {
   Organizer,
   OrganizerDashboard,
   OrganizerInput,
+  OrganizerVerificationRequest,
   ReportEventInput,
   Rsvp,
   SuspendUserInput,
@@ -1346,6 +1347,107 @@ export const usePublishOrganizerEvent = <TError = ErrorType<void>,
       > => {
       return useMutation(getPublishOrganizerEventMutationOptions(options), queryClient);
     }
+
+export const getGetOrganizerEventUrl = (eventId: number,) => {
+
+
+
+
+  return `/api/organizer/events/${eventId}`
+}
+
+/**
+ * @summary Get an event draft or published event for its owner
+ */
+export const getOrganizerEvent = async (eventId: number, options?: Parameters<typeof customFetch>[1]): Promise<Event> => {
+
+  return customFetch<Event>(getGetOrganizerEventUrl(eventId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetOrganizerEventQueryKey = (eventId: number,) => {
+    return [
+    `/api/organizer/events/${eventId}`
+    ] as const;
+    }
+
+
+export const getGetOrganizerEventQueryOptions = <TData = Awaited<ReturnType<typeof getOrganizerEvent>>, TError = ErrorType<void>>(eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizerEvent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOrganizerEventQueryKey(eventId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrganizerEvent>>> = ({ signal }) => getOrganizerEvent(eventId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: eventId !== null && eventId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOrganizerEvent>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOrganizerEventQueryResult = NonNullable<Awaited<ReturnType<typeof getOrganizerEvent>>>
+export type GetOrganizerEventQueryError = ErrorType<void>
+
+
+export function useGetOrganizerEvent<TData = Awaited<ReturnType<typeof getOrganizerEvent>>, TError = ErrorType<void>>(
+ eventId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizerEvent>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOrganizerEvent>>,
+          TError,
+          Awaited<ReturnType<typeof getOrganizerEvent>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOrganizerEvent<TData = Awaited<ReturnType<typeof getOrganizerEvent>>, TError = ErrorType<void>>(
+ eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizerEvent>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOrganizerEvent>>,
+          TError,
+          Awaited<ReturnType<typeof getOrganizerEvent>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOrganizerEvent<TData = Awaited<ReturnType<typeof getOrganizerEvent>>, TError = ErrorType<void>>(
+ eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizerEvent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get an event draft or published event for its owner
+ */
+
+export function useGetOrganizerEvent<TData = Awaited<ReturnType<typeof getOrganizerEvent>>, TError = ErrorType<void>>(
+ eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizerEvent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOrganizerEventQueryOptions(eventId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getUpdateOrganizerEventUrl = (eventId: number,) => {
 
@@ -3769,6 +3871,107 @@ export function useListAdminReports<TData = Awaited<ReturnType<typeof listAdminR
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListAdminReportsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListAdminVerificationsUrl = () => {
+
+
+
+
+  return `/api/admin/verifications`
+}
+
+/**
+ * @summary List pending organizer verification requests
+ */
+export const listAdminVerifications = async ( options?: Parameters<typeof customFetch>[1]): Promise<OrganizerVerificationRequest[]> => {
+
+  return customFetch<OrganizerVerificationRequest[]>(getListAdminVerificationsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminVerificationsQueryKey = () => {
+    return [
+    `/api/admin/verifications`
+    ] as const;
+    }
+
+
+export const getListAdminVerificationsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminVerifications>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminVerifications>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminVerificationsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminVerifications>>> = ({ signal }) => listAdminVerifications({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminVerifications>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListAdminVerificationsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminVerifications>>>
+export type ListAdminVerificationsQueryError = ErrorType<void>
+
+
+export function useListAdminVerifications<TData = Awaited<ReturnType<typeof listAdminVerifications>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminVerifications>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAdminVerifications>>,
+          TError,
+          Awaited<ReturnType<typeof listAdminVerifications>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAdminVerifications<TData = Awaited<ReturnType<typeof listAdminVerifications>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminVerifications>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAdminVerifications>>,
+          TError,
+          Awaited<ReturnType<typeof listAdminVerifications>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAdminVerifications<TData = Awaited<ReturnType<typeof listAdminVerifications>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminVerifications>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List pending organizer verification requests
+ */
+
+export function useListAdminVerifications<TData = Awaited<ReturnType<typeof listAdminVerifications>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminVerifications>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListAdminVerificationsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

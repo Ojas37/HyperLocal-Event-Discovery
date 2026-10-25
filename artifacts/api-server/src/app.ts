@@ -3,6 +3,9 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
+import { getAuth } from "@clerk/express";
+import { eq } from "drizzle-orm";
+import { accountSuspensionsTable, db } from "@workspace/db";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import {
@@ -45,6 +48,31 @@ app.use(
   })),
 );
 
+app.use("/api", async (req, res, next) => {
+  if (req.path === "/healthz") {
+    next();
+    return;
+  }
+  const userId = getAuth(req).userId;
+  if (!userId) {
+    next();
+    return;
+  }
+  try {
+    const [suspension] = await db
+      .select({ expiresAt: accountSuspensionsTable.expiresAt })
+      .from(accountSuspensionsTable)
+      .where(eq(accountSuspensionsTable.userId, userId))
+      .limit(1);
+    if (suspension && (!suspension.expiresAt || suspension.expiresAt > new Date())) {
+      res.status(403).json({ error: "This account is currently suspended." });
+      return;
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 app.use("/api", router);
 
 export default app;

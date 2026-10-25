@@ -268,7 +268,8 @@ export interface Rsvp {
   id: number;
   eventId: number;
   status: RsvpStatus;
-  registrationCode: string;
+  /** @nullable */
+  registrationCode: string | null;
   /** @nullable */
   checkedInAt: string | null;
 }
@@ -463,6 +464,15 @@ export interface AdminDashboard {
   openReports: number;
   pendingVerifications: number;
   suspendedUsers: number;
+}
+
+export interface OrganizerVerificationRequest {
+  id: number;
+  name: string;
+  type: string;
+  description: string;
+  /** @nullable */
+  requestedAt: string | null;
 }
 
 export interface Community {
